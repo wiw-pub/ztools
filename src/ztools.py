@@ -7,50 +7,80 @@ WIP: generalized set of operators for higher-level abstraction for pythonscad.
 def bounding_box(solid):
     '''
     Returns bounding box as a 2-element list of (x, y, z) coordinates.
+    mn is the "minimum" coordinate, and mx is the "maximum" coordinate.
     '''
     vertices, _ = solid.mesh()
     mn = [min(transpose) for transpose in zip(*vertices)]
     mx = [max(transpose) for transpose in zip(*vertices)]
     return [mn, mx]
 
-def bounding_box_mask(solid):
+def bounding_box_mask(solid, mn = None, mx = None):
     '''
     Bounding box as a cube.
+    Optionally: supply mn and mx to avoid recomputing bounding box. See bounding_box() for more details.
     '''
-    mn, mx = bounding_box(solid)
+    if not mn or not mx:
+        mn, mx = bounding_box(solid)
+
     lengths = [abs(b - a) for a, b in zip(mn, mx)]
     center_vector = [(b + a) / 2 for a, b in zip(mn, mx)]
     return cube(lengths, center=True).translate(center_vector)
 
-def center(solid):
+def center(solid, mn = None, mx = None):
     '''
     Center the solid on origin with bounding box.
+
+    Optionally: supply mn and mx to avoid recomputing bounding box. See bounding_box() for more details.
+
     Returns [solid at origin, move_vector used to move the solid to origin]
     '''
-    mn, mx = bounding_box(solid)
+    if not mn or not mx:
+        mn, mx = bounding_box(solid)
+
     move_vector = [-(sum(dims) / 2) for dims in zip(mn, mx)]
     return [solid.translate(move_vector), move_vector]
 
-def z_above_ground(solid):
+def z_above_ground(solid, mn = None, mx = None):
     '''
     Raise the whole solid above zero-z.
     It takes the lowest z vertex, and raise it so it's at zero-z.
+
+    Optionally: supply mn and mx to avoid recomputing bounding box. See bounding_box() for more details.
+
+    (Technically mx is not needed, and won't be checked. But present to keep function signature consistent with other bbox based functions).
+
     Returns post-translate solid.
     '''
-    mn, _ = bounding_box(solid)
+    if not mn:
+        mn, _ = bounding_box(solid)
+
     _, _, z = mn
     
     if z < 0:
         return solid.up(-z)
     return solid
 
-def z_height(solid):
+def magnitudes(solid, mn = None, mx = None):
+    '''
+    Returns x, y, z magnitudes based on bounding box.
+
+    Optionally: supply mn and mx to avoid recomputing bounding box. See bounding_box() for more details.
+
+    Return values are 0 or positive numbers only (by definition).
+    '''
+    if not mn or not mx:
+        mn, mx = bounding_box(solid)
+    
+    return [abs(big - small) for small, big in zip(mn, mx)]
+
+def z_height(solid, mn = None, mx = None):
     '''
     Returns z-height in magnitude of the bounding box. 
+
+    Optionally: supply mn and mx to avoid recomputing bounding box. See bounding_box() for more details.
     0 or positive numbers only (by definition).
     '''
-    mn, mx = bounding_box(solid)
-    return abs(mx[-1] - mn[-1])
+    return magnitudes(solid, mn, mx)[-1]
 
 def z_bisect(solid, top_mask=None):
     '''
@@ -129,7 +159,7 @@ def masked_map(mask, solid, func=lambda shape: shape.scale([0.5, 0.5, 1])):
 
     return [ (post_op | untouched), post_op, untouched ]
 
-def debug_face_indicators(solid, indicator = sphere(0.5), indicator_color = 'blue'):
+def debug_face_indicators(solid, indicator = sphere(0.5), indicator_color = 'yellow'):
     '''
     A generator of solids transposed to vertices indicating a face.
     Relies on mesh() underneath.
@@ -139,6 +169,24 @@ def debug_face_indicators(solid, indicator = sphere(0.5), indicator_color = 'blu
     User can show() each of the element returned by the generator.
     
     Since a solid can have MANY vertices: use itertools.islice() to efficency loop thru faces without pre-storing all the vertices x indicators.
+
+    Note: Each generator yield is a list of indicator shapes, in which displayed together shows the vertices of a face.
+    '''
+    # Vertex is your (x, y, z) coordinate.
+    # Faces is a list of arrays, where each array are index pointers to a specific vertex.
+    # A face would comprise of at least 3 vertices.
+
+    for coords in face_coordinates(solid):
+        dots = []
+        for xyz in coords:
+            dots.append(indicator.translate(xyz).color(indicator_color))
+        yield dots
+
+def debug_face_coordinates(solid):
+    '''
+    mesh() returns face in the form of index pointers to vertices.
+    This is a convenience function to return a generator of list of xyz coordinates to avoid the extra level of dereferencing.
+    For usability reasons only.
     '''
     # Vertex is your (x, y, z) coordinate.
     # Faces is a list of arrays, where each array are index pointers to a specific vertex.
@@ -146,8 +194,7 @@ def debug_face_indicators(solid, indicator = sphere(0.5), indicator_color = 'blu
     vertices, faces = solid.mesh()
 
     for vertex_indices in faces:
-        lst_indicators = []
+        coords = []
         for vertex_idx in vertex_indices:
-            dot = indicator.translate(vertices[vertex_idx]).color(indicator_color)
-            lst_indicators.append(dot)
-        yield lst_indicators
+            coords.append(vertices[vertex_idx])
+        yield coords
