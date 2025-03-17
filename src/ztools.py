@@ -40,6 +40,23 @@ def center(solid, mn = None, mx = None):
     move_vector = [-(sum(dims) / 2) for dims in zip(mn, mx)]
     return [solid.translate(move_vector), move_vector]
 
+def offset_3d(solid, delta = [1, 1, 1], mn = None, mx = None):
+    '''
+    Apply offset() to 3d shape.
+    delta is a 3-element array, matching x, y, and z growth dimensions.
+    Positive delta grows. Negative delta shrinks.
+    Delta acts like a "radius". E.g., Delta of [1, 0, 0] grows 2 in total in x dimension.
+    Returns the resized shape.
+    '''
+    if not mn or not mx:
+        mn, mx = bounding_box(solid)
+
+    x_mag, y_mag, z_mag = magnitudes(solid, mn, mx)
+    dx, dy, dz = delta
+
+    # delta is apply on "all sides".
+    return solid.resize([(x_mag + 2 * dx), (y_mag + 2 * dy), (z_mag + 2 * dz)])
+
 def z_above_ground(solid, mn = None, mx = None):
     '''
     Raise the whole solid above zero-z.

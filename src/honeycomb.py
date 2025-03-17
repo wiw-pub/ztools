@@ -129,13 +129,9 @@ class Honeycomb:
 
 
             # If border is enabled: prep the border to be unioned later.
-            if enable_border:
-                # BUG: offset(-r) is broken.
-                # Workaround: magitude - 2*r, and resize.
-                #face_3d.offset(r=thickness)
-                
+            if enable_border:                
                 # NOTE: Because the face will be flat on xy-plane with no Z difference, we only need to shrink in xy directions.
-                inner = flat_face_3d.resize([x_mag - 2*thickness, y_mag - 2*thickness, z_mag])
+                inner = zt.offset_3d(flat_face_3d, delta=[-thickness, -thickness, 0])
 
                 border = flat_face_3d - inner
         
