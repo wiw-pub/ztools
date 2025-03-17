@@ -14,7 +14,7 @@ def bounding_box(solid):
     mx = [max(transpose) for transpose in zip(*vertices)]
     return [mn, mx]
 
-def bounding_box_mask(solid, mn = None, mx = None):
+def bounding_box_cube(solid, mn = None, mx = None):
     '''
     Bounding box as a cube.
     Optionally: supply mn and mx to avoid recomputing bounding box. See bounding_box() for more details.
@@ -126,7 +126,7 @@ def z_donut_hole(donut):
     '''
     You have a donut. You want the donut hole.
     '''
-    mask_cube = bounding_box_mask(donut)
+    mask_cube = bounding_box_cube(donut)
     outer = hull(donut)
     
     # intersect the hull(donut) to cut out all the extra crap from bounding box cube.
