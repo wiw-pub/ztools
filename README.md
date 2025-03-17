@@ -72,3 +72,5 @@ Execute the standard imports such as `import honeycomb as hc`.
 # References
 
 PythonSCAD living wiki on various built-in functions https://www.reddit.com/r/OpenPythonSCAD/wiki/index
+
+PythonSCAD homepage https://pythonscad.org/
