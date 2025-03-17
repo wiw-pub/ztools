@@ -1,5 +1,13 @@
 from openscad import *
-import math, itertools
+import math, itertools, copy, functools
+
+# Prerequisites: Requires skin() feature to be ENABLED in Edit > Preferences > Features.
+
+# Users: 
+#   Ensure your sys.path has access to ztools.py and this file.
+#   At your top level pythonscad script, use nimport() on both ztools.py and honeycomb.py.
+#   README.md has more info in the github repo that contains this file.
+import ztools as zt
 
 class Honeycomb:
     '''
@@ -72,7 +80,82 @@ class Honeycomb:
             
         return mask & union(sheet) if not only_raw else union(sheet)
 
-    def fill_cylindrical_shell(self, radius, height, shell_thickness):
+    
+    def face_shell(self, solid, enable_border=True):
+        '''
+        Apply honeycomb perforated mesh on every face of the solid.
+
+        Prerequisites:
+            Requires skin() feature to be ENABLED in Edit > Preferences > Features.
+            Requires nimport('https://raw.githubusercontent.com/willywong/ztools/refs/heads/main/src/ztools.py')
+        
+        TODO: create a honeycomb_example.py to showcase its usage.
+        '''
+        # Identity matrix.
+        IDENT = cube(1).origin.copy()
+
+        thickness = self.thickness
+
+        shell_faces = []
+        borders = []
+        for i, f in enumerate(solid.faces()):
+            # Track the move vector from origin.
+            # This is important to "restore" orientation after manipulation at the origin.
+            orientation = f.matrix
+
+            # Faces inward for origin manipulation (negative Z; below ground).
+            # Since we want the final mesh to extrude "inward".
+            # This face_3d will be used as a mask on the honeycomb sheet to get the correct face.
+            face_3d = f.linear_extrude(-thickness)
+
+            # IMPORTANT: Handle to restore back to original position at the end.
+            face_3d.orig = IDENT
+
+            # Move to origin. This will be centered by default (thank you skin()).
+            flat_face_3d = face_3d.align(IDENT, orientation)
+
+            # Get the dimensions to apply honeycomb
+            # magnitudes() from ztools.
+            # center() from ztools.
+            x_mag, y_mag, z_mag = zt.magnitudes(flat_face_3d)
+            replacement_face_3d = zt.center(self.fill_sheet(x_mag, y_mag).linear_extrude(thickness))[0]
+
+            # Make sure the honeycomb sheet is "below ground" to have final shape extrude inward.
+            replacement_face_3d = replacement_face_3d.down(thickness/2)
+
+            # Intersect the volume to "fit" the rectangular honeycomb sheet to the face dimensions.
+            # Necessary for non-rectangular faces.
+            replacement_face_3d &= flat_face_3d
+
+
+            # If border is enabled: prep the border to be unioned later.
+            if enable_border:
+                # BUG: offset(-r) is broken.
+                # Workaround: magitude - 2*r, and resize.
+                #face_3d.offset(r=thickness)
+                
+                # NOTE: Because the face will be flat on xy-plane with no Z difference, we only need to shrink in xy directions.
+                inner = flat_face_3d.resize([x_mag - 2*thickness, y_mag - 2*thickness, z_mag])
+
+                border = flat_face_3d - inner
+        
+                # For debugging: add the border to collection.
+                borders.append(border)
+        
+                # Apply the border.
+                replacement_face_3d |= border
+
+
+            # Restored to original orientation
+            modified_face_3d = replacement_face_3d.align(IDENT, flat_face_3d.orig)
+
+            shell_faces.append(modified_face_3d)
+
+        # union all
+        shell = functools.reduce(lambda x, y: x | y, shell_faces)
+        return [shell] + shell_faces + borders
+
+    def deprecated_fill_cylindrical_shell(self, radius, height, shell_thickness):
         """
         A cylindrical shell of hexes.
         Classic openscad way.
