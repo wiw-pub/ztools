@@ -81,7 +81,7 @@ class Honeycomb:
         return mask & union(sheet) if not only_raw else union(sheet)
 
     
-    def face_shell(self, solid, enable_border=True):
+    def face_shell(self, solid, extrude_thickness, enable_border=True):
         '''
         Apply honeycomb perforated mesh on every face of the solid.
 
@@ -94,8 +94,6 @@ class Honeycomb:
         # Identity matrix.
         IDENT = cube(1).origin.copy()
 
-        thickness = self.thickness
-
         shell_faces = []
         borders = []
         for i, f in enumerate(solid.faces()):
@@ -106,7 +104,7 @@ class Honeycomb:
             # Faces inward for origin manipulation (negative Z; below ground).
             # Since we want the final mesh to extrude "inward".
             # This face_3d will be used as a mask on the honeycomb sheet to get the correct face.
-            face_3d = f.linear_extrude(-thickness)
+            face_3d = f.linear_extrude(-extrude_thickness)
 
             # IMPORTANT: Handle to restore back to original position at the end.
             face_3d.orig = IDENT
@@ -118,10 +116,10 @@ class Honeycomb:
             # magnitudes() from ztools.
             # center() from ztools.
             x_mag, y_mag, z_mag = zt.magnitudes(flat_face_3d)
-            replacement_face_3d = zt.center(self.fill_sheet(x_mag, y_mag).linear_extrude(thickness))[0]
+            replacement_face_3d = zt.center(self.fill_sheet(x_mag, y_mag).linear_extrude(extrude_thickness))[0]
 
             # Make sure the honeycomb sheet is "below ground" to have final shape extrude inward.
-            replacement_face_3d = replacement_face_3d.down(thickness/2)
+            replacement_face_3d = replacement_face_3d.down(extrude_thickness/2)
 
             # Intersect the volume to "fit" the rectangular honeycomb sheet to the face dimensions.
             # Necessary for non-rectangular faces.
@@ -131,7 +129,7 @@ class Honeycomb:
             # If border is enabled: prep the border to be unioned later.
             if enable_border:                
                 # NOTE: Because the face will be flat on xy-plane with no Z difference, we only need to shrink in xy directions.
-                inner = zt.offset_3d(flat_face_3d, delta=[-thickness, -thickness, 0])
+                inner = zt.offset_3d(flat_face_3d, delta=[-extrude_thickness, -extrude_thickness, 0])
 
                 border = flat_face_3d - inner
         
