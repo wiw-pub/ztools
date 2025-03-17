@@ -49,7 +49,9 @@ nimport('https://raw.githubusercontent.com/willywong/ztools/refs/heads/main/src/
 
 This will store a local copy of these libraries from github to your local "File > Show Library Folder" folder.
 
-NOTE: this "replaces" the classic `from honeycomb import *` statement if these libraries were part of stdlib or sourced from pip3. As such, you can't "rename" the imports with this convention.
+IMPORTANT NOTE: `nimport()` will only replace files in your "File > Show Library Folder" if the files are not present. To sync the latest from github, you need to remove your local copies in "File > Show Library Folder".
+
+Usage note: nimport() "replaces" the classic `from honeycomb import *` statement as-if these libraries were part of stdlib or sourced from pip3. As such, you can't "rename" the imports with this convention.
 
 If you need the flexibility in renaming import aliases, remove the `nimport()` and manually copy those libraries to the designated lib folder, and use standard python import statements such as `import honeycomb as hc`, etc.
 
