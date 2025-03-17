@@ -54,8 +54,14 @@ def offset_3d(solid, delta = [1, 1, 1], mn = None, mx = None):
     x_mag, y_mag, z_mag = magnitudes(solid, mn, mx)
     dx, dy, dz = delta
 
+    # Because resize is performed in respect to origin, we need to move the solid to origin first, transform, and restore back to its original position.
+    at_origin, move_vector_used = center(solid, mn, mx)
+
     # delta is apply on "all sides".
-    return solid.resize([(x_mag + 2 * dx), (y_mag + 2 * dy), (z_mag + 2 * dz)])
+    resized = at_origin.resize([(x_mag + 2 * dx), (y_mag + 2 * dy), (z_mag + 2 * dz)])
+
+    # Restored to original position.
+    return resized.translate([-dim for dim in move_vector_used])
 
 def z_above_ground(solid, mn = None, mx = None):
     '''
@@ -174,7 +180,7 @@ def masked_map(mask, solid, func=lambda shape: shape.scale([0.5, 0.5, 1])):
     untouched = solid - operating_vol
     post_op = func(operating_vol)
 
-    return [ (post_op | untouched), post_op, untouched ]
+    return [ (post_op | untouched), operating_vol, post_op, untouched ]
 
 def debug_face_indicators(solid, indicator = sphere(0.5), indicator_color = 'yellow'):
     '''
