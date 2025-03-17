@@ -43,8 +43,8 @@ print(sys.path)
 After that, you can use nimport() like this:
 
 ```py
-nimport('https://raw.githubusercontent.com/willywong/ztools/refs/heads/main/src/honeycomb.py')
-nimport('https://raw.githubusercontent.com/willywong/ztools/refs/heads/main/src/ztools.py')
+nimport('https://raw.githubusercontent.com/wiw-pub/ztools/refs/heads/main/src/honeycomb.py')
+nimport('https://raw.githubusercontent.com/wiw-pub/ztools/refs/heads/main/src/ztools.py')
 ```
 
 This will store a local copy of these libraries from github to your local "File > Show Library Folder" folder.
