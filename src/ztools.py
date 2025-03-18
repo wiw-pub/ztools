@@ -63,10 +63,12 @@ def offset_3d(solid, delta = [1, 1, 1], mn = None, mx = None):
     # Restored to original position.
     return resized.translate([-dim for dim in move_vector_used])
 
-def z_above_ground(solid, mn = None, mx = None):
+def z_ground_level(solid, mn = None, mx = None):
     '''
     Raise the whole solid above zero-z.
     It takes the lowest z vertex, and raise it so it's at zero-z.
+
+    If the solid is in the air, put it on the ground.
 
     Optionally: supply mn and mx to avoid recomputing bounding box. See bounding_box() for more details.
 
@@ -78,10 +80,7 @@ def z_above_ground(solid, mn = None, mx = None):
         mn, _ = bounding_box(solid)
 
     _, _, z = mn
-    
-    if z < 0:
-        return solid.up(-z)
-    return solid
+    return solid.down(z)
 
 def magnitudes(solid, mn = None, mx = None):
     '''
