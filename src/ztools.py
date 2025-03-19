@@ -63,7 +63,26 @@ def offset_3d(solid, delta = [1, 1, 1], mn = None, mx = None):
     # Restored to original position.
     return resized.translate([-dim for dim in move_vector_used])
 
-def z_ground_level(solid, mn = None, mx = None):
+def axis_aligned(solid, axis = [0, 0, 1], mn = None, mx = None):
+    '''
+    Generalized bounding box aligner. Defaults to positive z-axis
+    (This is a work in progress; only intends to work for POSITIVE axis alignment for now).
+    '''
+    if not mn or not mx:
+        mn, _ = bounding_box(solid)
+    
+    ops = (
+        lambda s, minimums: s.right(-minimums),
+        lambda s, minimums: s.back(-minimums),
+        lambda s, minimums: s.up(-minimums),
+    )
+    
+    res = solid
+    for op, minimums, ax in zip(ops, mn, axis):
+        res = op(res, minimums * ax)
+    return res
+
+def z_aligned(solid, mn = None, mx = None):
     '''
     Raise the whole solid above zero-z.
     It takes the lowest z vertex, and raise it so it's at zero-z.
@@ -76,11 +95,16 @@ def z_ground_level(solid, mn = None, mx = None):
 
     Returns post-translate solid.
     '''
-    if not mn:
-        mn, _ = bounding_box(solid)
+    # if not mn:
+    #     mn, _ = bounding_box(solid)
 
-    _, _, z = mn
-    return solid.down(z)
+    # _, _, z = mn
+    # return solid.up(-z)
+
+    return axis_aligned(solid, axis = [0, 0, 1], mn=mn, mx=mx)
+
+def xy_aligned(solid, mn = None, mx = None):
+    return axis_aligned(solid, axis = [1, 1, 0], mn=mn, mx=mx)
 
 def magnitudes(solid, mn = None, mx = None):
     '''
@@ -180,6 +204,18 @@ def masked_map(mask, solid, func=lambda shape: shape.scale([0.5, 0.5, 1])):
     post_op = func(operating_vol)
 
     return [ (post_op | untouched), operating_vol, post_op, untouched ]
+
+def to_matrix(vec):
+    x, y, z = vec
+    return [
+        [1, 0, 0, x],
+        [0, 1, 0, y],
+        [0, 0, 1, z],
+        [0, 0, 0, 1]
+    ]
+
+def to_translation_vector(matrix):
+    return [matrix[0][-1], matrix[1][-1], matrix[2][-1]]
 
 def debug_face_indicators(solid, indicator = sphere(0.5), indicator_color = 'yellow'):
     '''

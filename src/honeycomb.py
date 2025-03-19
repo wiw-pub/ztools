@@ -36,8 +36,8 @@ class Honeycomb:
 
         # x_offset shifts the honeycomb hexagon corner-to-corner, but need to reduce by the hexagon's wing obtuse triangle height.
         # wing obtuse triangle height = radius * cos(60)
-        wing_obtuse_triangle_height = self.outer_radius * math.cos(math.radians(60))
-        x_offset, y_offset = (self.outer_radius * 2 - wing_obtuse_triangle_height), self.perpendicular_angle() * self.outer_radius
+        wing_obtuse_triangle_height = (self.outer_radius) * math.cos(math.radians(60))
+        x_offset, y_offset = (self.outer_radius * 2 - self.thickness - wing_obtuse_triangle_height), self.perpendicular_angle() * (self.outer_radius - self.thickness/2)
         b = a.translate([x_offset, y_offset, 0])
         res = a | b
 
@@ -74,8 +74,8 @@ class Honeycomb:
         x_bound = math.ceil(x / d)
         y_bound = math.ceil(y / (self.perpendicular_angle() * d))
 
+        shell, x_off, y_off = self.pair()
         for xx, yy in itertools.product(range(x_bound), range(y_bound)):
-            shell, x_off, y_off = self.pair()
             sheet.append(shell.translate([x_off * xx, y_off * yy, 0]))
             
         return mask & union(sheet) if not only_raw else union(sheet)
