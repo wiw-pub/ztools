@@ -40,7 +40,7 @@ def center(solid, mn = None, mx = None):
     move_vector = [-(sum(dims) / 2) for dims in zip(mn, mx)]
     return [solid.translate(move_vector), move_vector]
 
-def offset_3d(solid, delta = [1, 1, 1], mn = None, mx = None):
+def offset_3d(solid, delta = [1, 1, 1], auto_center=True, mn = None, mx = None):
     '''
     Apply offset() to 3d shape.
     delta is a 3-element array, matching x, y, and z growth dimensions.
@@ -55,13 +55,19 @@ def offset_3d(solid, delta = [1, 1, 1], mn = None, mx = None):
     dx, dy, dz = delta
 
     # Because resize is performed in respect to origin, we need to move the solid to origin first, transform, and restore back to its original position.
-    at_origin, move_vector_used = center(solid, mn, mx)
+    # Do this if auto_center=True.
+    at_origin = solid
+    if auto_center:
+        at_origin, move_vector_used = center(solid, mn, mx)
 
     # delta is apply on "all sides".
     resized = at_origin.resize([(x_mag + 2 * dx), (y_mag + 2 * dy), (z_mag + 2 * dz)])
 
     # Restored to original position.
-    return resized.translate([-dim for dim in move_vector_used])
+    res = resized
+    if auto_center:
+        res = resized.translate([-dim for dim in move_vector_used])
+    return res
 
 def axis_aligned(solid, axis = [0, 0, 1], mn = None, mx = None):
     '''
@@ -186,6 +192,20 @@ def z_hammer_hull_union(top_solid, bottom_solid, full_pierce=False):
         bottom_solid -= hole_punch
 
     return top_solid | (bottom_solid - hull(top_solid))
+
+def rolling_hull(solid, path):
+    '''
+    Returned the object formed by the shadow left by rolling the solid along all the coordinates on the path.
+    '''
+    template = center(solid)[0]
+    whole_path = []
+    vertices = []
+    for coord in path:
+        vertices.append(template.translate(coord))
+        if len(vertices) >= 2:
+            whole_path.append(hull(vertices[-1], vertices[-2]))
+
+    return [union(whole_path)] + vertices
 
 def masked_map(mask, solid, func=lambda shape: shape.scale([0.5, 0.5, 1])):
     '''
