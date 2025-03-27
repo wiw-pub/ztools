@@ -91,8 +91,6 @@ class Honeycomb:
         
         TODO: create a honeycomb_example.py to showcase its usage.
         '''
-        # Identity matrix.
-        IDENT = cube(1).origin.copy()
 
         shell_faces = []
         borders = []
@@ -101,22 +99,22 @@ class Honeycomb:
             # This is important to "restore" orientation after manipulation at the origin.
             orientation = f.matrix
 
-            # Faces inward for origin manipulation (negative Z; below ground).
-            # Since we want the final mesh to extrude "inward".
-            # This face_3d will be used as a mask on the honeycomb sheet to get the correct face.
-            face_3d = f.linear_extrude(-extrude_thickness)
-
-            # IMPORTANT: Handle to restore back to original position at the end.
-            face_3d.orig = IDENT
+            # Note: do not do negative extrude_thickness. Render does not perform well.
+            # We want the final mesh to extrude "inward".
+            # To have faces extrude inward (negative Z; below ground), shift .down() after transform the face to origin for manipulation.
+            face_3d = f.linear_extrude(extrude_thickness)
 
             # Move to origin. This will be centered by default (thank you skin()).
-            flat_face_3d = face_3d.align(IDENT, orientation)
+            #flat_face_3d = face_3d.align(IDENT, orientation).down(extrude_thickness)
+            flat_face_3d = face_3d.divmatrix(orientation).down(extrude_thickness)
 
             # Get the dimensions to apply honeycomb
             # magnitudes() from ztools.
             # center() from ztools.
-            x_mag, y_mag, z_mag = zt.magnitudes(flat_face_3d)
-            replacement_face_3d = zt.center(self.fill_sheet(x_mag, y_mag).linear_extrude(extrude_thickness))[0]
+            x_mag, y_mag, _ = zt.magnitudes(flat_face_3d)
+
+            # Hack: For some triangles, the x_mag, y_mag gets cut off. 2x it as a quick hack to ensure honeycomb sheet can encompass the whole face.
+            replacement_face_3d = zt.center(self.fill_sheet(x_mag * 2, y_mag * 2).linear_extrude(extrude_thickness))[0]
 
             # Make sure the honeycomb sheet is "below ground" to have final shape extrude inward.
             replacement_face_3d = replacement_face_3d.down(extrude_thickness/2)
@@ -126,10 +124,10 @@ class Honeycomb:
             replacement_face_3d &= flat_face_3d
 
 
-            # If border is enabled: prep the border to be unioned later.
-            if enable_border:                
+            def old_border_impl(replacement_face_3d, flat_face_3d):
                 # NOTE: Because the face will be flat on xy-plane with no Z difference, we only need to shrink in xy directions.
-                inner = zt.offset_3d(flat_face_3d, delta=[-extrude_thickness, -extrude_thickness, 0])
+                # Learning from /u/gadget3D: larger "cut" mask fixes z-fighting. Make delta-z positive, not zero.
+                inner = zt.offset_3d(flat_face_3d, delta=[-extrude_thickness, -extrude_thickness, extrude_thickness])
 
                 border = flat_face_3d - inner
         
@@ -137,12 +135,26 @@ class Honeycomb:
                 borders.append(border)
         
                 # Apply the border.
-                replacement_face_3d |= border
+                return replacement_face_3d | border
+            
+            def new_border_impl(replacement_face_3d, flat_face_3d):
+                '''
+                From /u/gadget3D's suggestion to fix z-fighting??
+                '''
+                # The over extrusion on the cut fixes z-fighting problems.
+                border_cut = flat_face_3d.projection().offset(-extrude_thickness).linear_extrude(extrude_thickness*3).down(1.5*extrude_thickness)
+                border_frame = flat_face_3d - border_cut
+                return replacement_face_3d | border_frame
+
+            # If border is enabled: prep the border to be unioned later.
+            if enable_border:                
+                replacement_face_3d = old_border_impl(replacement_face_3d, flat_face_3d)
+                #replacement_face_3d = new_border_impl(replacement_face_3d, flat_face_3d)
 
 
             # Restored to original orientation
-            modified_face_3d = replacement_face_3d.align(IDENT, flat_face_3d.orig)
-
+            # Do multmatrix (instead of align()), so it ignores the .down() I performed after inverse align() with f.matrix (divmatrix).
+            modified_face_3d = replacement_face_3d.multmatrix(orientation)
             shell_faces.append(modified_face_3d)
 
         # union all
