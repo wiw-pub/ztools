@@ -19,6 +19,8 @@ Libs in public repo supports using nimport(). See https://www.reddit.com/r/OpenP
 Copy and paste this into your PythonSCAD script up top.
 
 ```py
+import os
+
 def load_openscad_thirdparty_lib():
     '''
     Ensure PythonScad loads third party libraries from its pre-designated library folder path.
