@@ -146,7 +146,7 @@ class Honeycomb:
             shell_faces.append(modified_face_3d)
 
         # union all
-        shell = functools.reduce(lambda x, y: x | y, shell_faces)
+        shell = union(shell_faces)
         return [shell] + shell_faces + borders
 
     def deprecated_fill_cylindrical_shell(self, radius, height, shell_thickness):
