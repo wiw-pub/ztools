@@ -237,6 +237,50 @@ def to_matrix(vec):
 def to_translation_vector(matrix):
     return [matrix[0][-1], matrix[1][-1], matrix[2][-1]]
 
+def arc(arc_point_left, arc_point_mid, arc_point_right):
+    '''
+    Returns a "cut off" circle, containing an arc bounded by the three points above.
+    The three points, if drawn, should lie on the arc.
+    The minor segment is produced using Intersecting Chord Theorem.
+
+    Returns major and minor segment. If shown together, you see a full circle.
+
+    TODO: Live in a different lib?
+    '''
+    
+    def line_magnitude(point_left, point_right):
+        x1, y1 = point_left
+        x2, y2 = point_right
+        return ((y2 - y1) ** 2 + (x2 - x1) ** 2) ** 0.5
+
+    def midpoint(point_left, point_right):
+        x1, y1 = point_left
+        x2, y2 = point_right
+    
+        return (x1 + x2) / 2, (y1 + y2) / 2
+
+    ab = line_magnitude(arc_point_left, arc_point_right)
+    mid = midpoint(arc_point_left, arc_point_right)
+    c = line_magnitude(arc_point_mid, mid)
+
+    # Apply intersecting chord theorem
+    d = ab / c
+    diam = c + d
+
+    # print(f"{ab=} {mid=} {c=} {d=} {diam=}")
+
+    # Cut out the minor segment.
+    # Major segment to the left, minor segment to the right.
+    whole_circle = circle(d=diam)
+    whole_circle = whole_circle.left(d - diam/2)
+    
+    minor_segment_mask = square([diam, diam]).front(diam/2)
+
+    minor_segment = whole_circle & minor_segment_mask
+    major_segment = whole_circle - minor_segment
+    
+    return [major_segment, minor_segment]
+
 def debug_face_indicators(solid, indicator = sphere(0.5), indicator_color = 'yellow'):
     '''
     A generator of solids transposed to vertices indicating a face.
