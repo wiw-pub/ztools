@@ -1,5 +1,6 @@
 from openscad import *
 
+import math, heapq
 '''
 WIP: generalized set of operators for higher-level abstraction for pythonscad.
 '''
@@ -281,6 +282,43 @@ def arc(arc_point_left, arc_point_mid, arc_point_right):
     
     return [major_segment, minor_segment]
 
+def debug_find_face_by_normal_vector(solid, estimated_norm_vec, num_faces=1):
+    '''
+    Expected usage: user uses the measure tool after render, to find the 3x1 normal vector (printed in stdout status bar) of the face they want.
+    Pass that 3x1 vector, and programming this returns the face closest to the given normal vector.
+    It is possible to have multiple faces with the same normal vector (or matched by magnitude delta). Arg num_faces allows returning top matches up to num_faces.
+    '''
+
+    def transformation_matrix_to_normal_vector(trans_matrix):
+        '''
+        Discovered this by observation via debugging.
+        f.matrix from faces() -> 3rd column = normal vector.
+        '''
+        return [row[2] for row in trans_matrix[:3]]
+    
+    def dist(x_mag, y_mag, z_mag):
+        '''
+        Get scalar of the magnitude between 2 vectors.
+        '''
+        return math.sqrt(x_mag ** 2 + y_mag ** 2 + z_mag ** 2)
+    
+    def iterate_faces():
+        '''
+        Helper function to preprocess the items we need for evaluating faces in ranked order closest to arg estimated_norm_vec.
+        '''
+        for idx, f in enumerate(solid.faces()):
+            face_normal_vector = transformation_matrix_to_normal_vector(f.matrix)
+            d = dist(*magnitudes(None, mn=face_normal_vector, mx=estimated_norm_vec))
+            # (face, idx, magnitude dist between estimated_norm_vec and face's norm vec)
+            yield (f, idx, d)
+
+    best_matched_faces = heapq.nsmallest(num_faces, iterate_faces(), key=lambda tup: tup[2])
+    
+    # Reformat the output to list of 3 lists: [faces], [index], [dist].
+    # It's a simple transpose. Need to deref the tuples to flatten before rewrap as lists. Both arg to zip, and zip's output (which default to tuple).
+    return [[*dim] for dim in zip(*best_matched_faces)]
+
+
 def debug_face_indicators(solid, indicator = sphere(0.5), indicator_color = 'yellow'):
     '''
     A generator of solids transposed to vertices indicating a face.
@@ -298,7 +336,7 @@ def debug_face_indicators(solid, indicator = sphere(0.5), indicator_color = 'yel
     # Faces is a list of arrays, where each array are index pointers to a specific vertex.
     # A face would comprise of at least 3 vertices.
 
-    for coords in face_coordinates(solid):
+    for coords in debug_face_coordinates(solid):
         dots = []
         for xyz in coords:
             dots.append(indicator.translate(xyz).color(indicator_color))
