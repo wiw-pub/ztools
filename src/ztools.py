@@ -260,20 +260,21 @@ def arc(arc_point_left, arc_point_mid, arc_point_right):
     
         return (x1 + x2) / 2, (y1 + y2) / 2
 
-    ab = line_magnitude(arc_point_left, arc_point_right)
     mid = midpoint(arc_point_left, arc_point_right)
+    a_mid = line_magnitude(arc_point_left, mid)
+    b_mid = line_magnitude(mid, arc_point_right)
     c = line_magnitude(arc_point_mid, mid)
 
     # Apply intersecting chord theorem
-    d = ab / c
+    d = a_mid * b_mid / c
     diam = c + d
 
-    # print(f"{ab=} {mid=} {c=} {d=} {diam=}")
+    # print(f"{a_mid=} {a_mid=} {mid=} {c=} {d=} {diam=}")
 
     # Cut out the minor segment.
     # Major segment to the left, minor segment to the right.
     whole_circle = circle(d=diam)
-    whole_circle = whole_circle.left(d - diam/2)
+    whole_circle = whole_circle.right(diam/2).left(d)
     
     minor_segment_mask = square([diam, diam]).front(diam/2)
 
