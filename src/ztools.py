@@ -27,10 +27,11 @@ def bounding_box_cube(solid, mn = None, mx = None):
     center_vector = [(b + a) / 2 for a, b in zip(mn, mx)]
     return cube(lengths, center=True).translate(center_vector)
 
-def center(solid, mn = None, mx = None):
+def center(solid, axis = [1, 1, 1], mn = None, mx = None):
     '''
     Center the solid on origin with bounding box.
 
+    Optionally: Choose which axis you want to center on. Default = center on all 3 axis.
     Optionally: supply mn and mx to avoid recomputing bounding box. See bounding_box() for more details.
 
     Returns [solid at origin, move_vector used to move the solid to origin]
@@ -38,7 +39,7 @@ def center(solid, mn = None, mx = None):
     if not mn or not mx:
         mn, mx = bounding_box(solid)
 
-    move_vector = [-(sum(dims) / 2) for dims in zip(mn, mx)]
+    move_vector = [-(sum(dims) / 2) if axis[axis_idx] == 1 else 0 for axis_idx, dims in enumerate(zip(mn, mx))]
     return [solid.translate(move_vector), move_vector]
 
 def offset_3d(solid, delta = [1, 1, 1], auto_center=True, mn = None, mx = None):
