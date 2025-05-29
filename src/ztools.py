@@ -238,6 +238,17 @@ def to_matrix(vec):
 def to_translation_vector(matrix):
     return [matrix[0][-1], matrix[1][-1], matrix[2][-1]]
 
+def line_magnitude(point_left, point_right):
+    x1, y1 = point_left
+    x2, y2 = point_right
+    return ((y2 - y1) ** 2 + (x2 - x1) ** 2) ** 0.5
+
+def midpoint(point_left, point_right):
+    x1, y1 = point_left
+    x2, y2 = point_right
+
+    return (x1 + x2) / 2, (y1 + y2) / 2
+
 def arc(arc_point_left, arc_point_mid, arc_point_right):
     '''
     Returns a "cut off" circle, containing an arc bounded by the three points above.
@@ -249,17 +260,6 @@ def arc(arc_point_left, arc_point_mid, arc_point_right):
     TODO: Live in a different lib?
     '''
     
-    def line_magnitude(point_left, point_right):
-        x1, y1 = point_left
-        x2, y2 = point_right
-        return ((y2 - y1) ** 2 + (x2 - x1) ** 2) ** 0.5
-
-    def midpoint(point_left, point_right):
-        x1, y1 = point_left
-        x2, y2 = point_right
-    
-        return (x1 + x2) / 2, (y1 + y2) / 2
-
     mid = midpoint(arc_point_left, arc_point_right)
     a_mid = line_magnitude(arc_point_left, mid)
     b_mid = line_magnitude(mid, arc_point_right)
@@ -359,3 +359,4 @@ def debug_face_coordinates(solid):
         for vertex_idx in vertex_indices:
             coords.append(vertices[vertex_idx])
         yield coords
+
