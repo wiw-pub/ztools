@@ -80,7 +80,7 @@ def axis_aligned(solid, axis = [0, 0, 1], mn = None, mx = None):
     if not mn or not mx:
         mn, _ = bounding_box(solid)
 
-    if any(abs(a) > 1 for a in axis)):
+    if any([abs(a) > 1 for a in axis]):
         raise Exception("Each axis argument must be in the inclusive range of [-1, 1]")
     
     # Move the solid in the positive direction of the axis, such that the minimum bounds touch the axis zeroes.
