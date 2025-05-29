@@ -99,7 +99,7 @@ def axis_aligned(solid, axis = [0, 0, 1], mn = None, mx = None):
     
     res = solid
     for op, minimums, maximums, ax in zip(ops, mn, mx, axis):
-        res = op(res, minimums * ax) if ax >= 0 else neg_ops(res, maximums * -ax)
+        res = op(res, minimums * ax) if ax >= 0 else neg_ops(res, maximums * ax)
     return res
 
 def z_aligned(solid, mn = None, mx = None):
