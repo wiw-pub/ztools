@@ -73,21 +73,33 @@ def offset_3d(solid, delta = [1, 1, 1], auto_center=True, mn = None, mx = None):
 
 def axis_aligned(solid, axis = [0, 0, 1], mn = None, mx = None):
     '''
-    Generalized bounding box aligner. Defaults to positive z-axis
-    (This is a work in progress; only intends to work for POSITIVE axis alignment for now).
+    Generalized bounding box aligner. Defaults to positive z-axis.
+    Works for negative axis for "below" alignment.
+    Will downscale with fractions in axis, but that's not necessarily intended.
     '''
     if not mn or not mx:
         mn, _ = bounding_box(solid)
+
+    if any(abs(a) > 1 for a in axis)):
+        raise Exception("Each axis argument must be in the inclusive range of [-1, 1]")
     
+    # Move the solid in the positive direction of the axis, such that the minimum bounds touch the axis zeroes.
     ops = (
         lambda s, minimums: s.right(-minimums),
         lambda s, minimums: s.back(-minimums),
         lambda s, minimums: s.up(-minimums),
     )
+
+    # Move the solid in the negative direction of the axis, such that the maximum bounds touch the axis zeroes.
+    neg_ops = (
+        lambda s, maximums: s.left(maximums),
+        lambda s, maximums: s.front(maximums),
+        lambda s, maximums: s.down(maximums),
+    )
     
     res = solid
-    for op, minimums, ax in zip(ops, mn, axis):
-        res = op(res, minimums * ax)
+    for op, minimums, maximums, ax in zip(ops, mn, mx, axis):
+        res = op(res, minimums * ax) if ax >= 0 else neg_ops(res, maximums * -ax)
     return res
 
 def z_aligned(solid, mn = None, mx = None):
@@ -181,7 +193,6 @@ def z_hammer_hull_union(top_solid, bottom_solid, full_pierce=False):
     '''
     if full_pierce:
         bottom_solid_height = z_height(bottom_solid)
-        print(bottom_solid_height)
         mn, _ = bounding_box(bottom_solid)
     
         # Create a hole punch to bottom_solid, use projection(hull(top_solid) thru the height of bottom_solid.
