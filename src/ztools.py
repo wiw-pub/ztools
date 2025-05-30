@@ -295,6 +295,25 @@ def arc(arc_point_left, arc_point_mid, arc_point_right):
     
     return [major_segment, minor_segment]
 
+def add_single_brim(convex_solid, scale_factor=1.2, height=0.2):
+    '''
+    Assume solid is already z-aligned.
+    Adds a thin brim over the solid's footprint.
+    
+    Why: prusaslicer only supports outer and inner brim, but not brim over "intermediate" foot print that isn't the inner or outer most perimeter.
+    
+    This utility applies brim on a uni-convex solid (don't do this to a unioned object that is disjointed in space). This is due to the limitation of scaling. On disjointed objects...the brim would be dislocated from the actual contact point to the build plate.
+    '''
+    # Relocate to origin for scaling
+    tmp, move_vec = center(convex_solid, axis=[1, 1, 0])
+    brim = tmp.projection(True).scale([scale_factor, scale_factor, scale_factor])
+    brim = brim.linear_extrude(height)
+    
+    # Restore movement
+    brim = brim.translate([-p for p in move_vec])
+    
+    return [convex_solid | brim, brim]
+
 def debug_find_face_by_normal_vector(solid, estimated_norm_vec, num_faces=1):
     '''
     Expected usage: user uses the measure tool after render, to find the 3x1 normal vector (printed in stdout status bar) of the face they want.
