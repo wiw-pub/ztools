@@ -295,6 +295,16 @@ def arc(arc_point_left, arc_point_mid, arc_point_right):
     
     return [major_segment, minor_segment]
 
+def rotate_point_horizontal(pt, angle_offset_deg):
+    '''
+    Utility for rotating a point (x, y, z) in respect to origin on the xy plane.
+    '''
+    x, y, z = pt
+    nx = x * math.cos(math.radians(angle_offset_deg)) - y * math.sin(math.radians(angle_offset_deg))
+    ny = x * math.sin(math.radians(angle_offset_deg)) + y * math.cos(math.radians(angle_offset_deg))
+    nz = z
+    return [nx, ny, nz]
+
 def add_single_brim(convex_solid, scale_factor=1.2, height=0.2):
     '''
     Assume solid is already z-aligned.
