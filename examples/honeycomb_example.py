@@ -8,7 +8,8 @@ def load_openscad_thirdparty_lib():
     if LIB_PATH not in sys.path:
         sys.path.append(LIB_PATH)
 
-load_openscad_thirdparty_lib()
+# No longer need to edit sys.path since 2025.05.22 build.
+#load_openscad_thirdparty_lib()
 
 nimport('https://raw.githubusercontent.com/wiw-pub/ztools/refs/heads/main/src/honeycomb.py')
 nimport('https://raw.githubusercontent.com/wiw-pub/ztools/refs/heads/main/src/ztools.py')
