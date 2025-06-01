@@ -275,25 +275,41 @@ def arc(arc_point_left, arc_point_mid, arc_point_right):
     mid = midpoint(arc_point_left, arc_point_right)
     a_mid = line_magnitude(arc_point_left, mid)
     b_mid = line_magnitude(mid, arc_point_right)
-    c = line_magnitude(arc_point_mid, mid)
+    minor = line_magnitude(arc_point_mid, mid)
 
     # Apply intersecting chord theorem
-    d = a_mid * b_mid / c
-    diam = c + d
+    major = a_mid * b_mid / minor
+    diam = minor + major
 
     # print(f"{a_mid=} {a_mid=} {mid=} {c=} {d=} {diam=}")
 
     # Cut out the minor segment.
     # Major segment to the left, minor segment to the right.
     whole_circle = circle(d=diam)
-    whole_circle = whole_circle.right(diam/2).left(d)
+    whole_circle = whole_circle.right(diam/2).left(major)
     
     minor_segment_mask = square([diam, diam]).front(diam/2)
 
     minor_segment = whole_circle & minor_segment_mask
     major_segment = whole_circle - minor_segment
     
-    return [major_segment, minor_segment]
+    return [major_segment, minor_segment, diam, major, minor]
+
+def sphere_arc(arc_point_left, arc_point_mid, arc_point_right):
+    '''
+    Sphere version of arc. Gives you have cutted spheres in major and minor sections.
+
+    Used for: making a "pill" shape for DIY fillet on joints.
+    '''
+    major_segment, minor_segment, diam, major, minor = arc(arc_point_left, arc_point_mid, arc_point_right)
+
+    # shift default centered sphere to align with major/minor segment placement of arcs.
+    base = sphere(d=diam).right(diam/2).left(major)
+
+    # Make sure masks are z-centered.
+    major_mask, minor_mask = [center(shape.linear_extrude(diam), axis=[0, 0, 1])[0] for shape in (major_segment, minor_segment)]
+    return [base & major_mask, base & minor_mask, diam, major, minor]
+    
 
 def rotate_point_horizontal(pt, angle_offset_deg):
     '''
