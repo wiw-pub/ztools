@@ -171,6 +171,15 @@ def z_bisect(solid, top_mask=None):
     bottom = solid - top
     return [top, bottom]
 
+def y_bisect(solid):
+    '''
+    Convenience alias in cutting a solid "left and right" across the Y plane.
+    For more fine-grain control: DIY with z_bisect().
+    '''
+    left, right = z_bisect(solid.roty(90))
+    left, right = [item.roty(-90) for item in (left, right)]
+    return [left, right]
+
 def z_donut_hole(donut):
     '''
     You have a donut. You want the donut hole.
