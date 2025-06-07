@@ -82,7 +82,7 @@ def axis_aligned(solid, axis = [0, 0, 1], mn = None, mx = None):
 
     if any([abs(a) > 1 for a in axis]):
         raise Exception("Each axis argument must be in the inclusive range of [-1, 1]")
-    
+
     # Move the solid in the positive direction of the axis, such that the minimum bounds touch the axis zeroes.
     ops = (
         lambda s, minimums: s.right(-minimums),
@@ -96,7 +96,7 @@ def axis_aligned(solid, axis = [0, 0, 1], mn = None, mx = None):
         lambda s, maximums: s.front(maximums),
         lambda s, maximums: s.down(maximums),
     )
-    
+
     res = solid
     for op, neg_op, minimums, maximums, ax in zip(ops, neg_ops, mn, mx, axis):
         res = op(res, minimums * ax) if ax >= 0 else neg_op(res, maximums * -ax)
@@ -136,19 +136,19 @@ def magnitudes(solid, mn = None, mx = None):
     '''
     if not mn or not mx:
         mn, mx = bounding_box(solid)
-    
+
     return [abs(big - small) for small, big in zip(mn, mx)]
 
 def z_height(solid, mn = None, mx = None):
     '''
-    Returns z-height in magnitude of the bounding box. 
+    Returns z-height in magnitude of the bounding box.
 
     Optionally: supply mn and mx to avoid recomputing bounding box. See bounding_box() for more details.
     0 or positive numbers only (by definition).
     '''
     return magnitudes(solid, mn, mx)[-1]
 
-def z_bisect(solid, top_mask=None):
+def z_bisect(solid, top_mask=None, epsilon=0.1):
     '''
     Horizontal chop, given (optional) top mask.
     If top mask is unspecified, xy-plane is used as the cut line.
@@ -157,26 +157,28 @@ def z_bisect(solid, top_mask=None):
     if not top_mask:
         # Just need the xy dimensions.
         mn, mx = bounding_box(solid)
-        
+
         # Clock wise points
         xy_points = [
-            mn[:2],   # lower left
-            [mn[0], mx[1]],
-            mx[:2],   # upper right
-            [mx[0], mn[1]]
+            [p - epsilon for p in mn[:2]],   # lower left
+            [mn[0] - epsilon, mx[1] + epsilon],
+            [p + epsilon for p in mx[:2]],   # upper right
+            [mx[0] + epsilon, mn[1] - epsilon]
         ]
         top_mask = polygon(xy_points).linear_extrude(mx[2])
 
     top = solid & top_mask
-    bottom = solid - top
+
+    # To combat z-fighting: scale up the top portion.
+    bottom = solid - hull(top).scale([1 + epsilon, 1 + epsilon, 1 + epsilon])
     return [top, bottom]
 
-def y_bisect(solid):
+def y_bisect(solid, epsilon=0.1):
     '''
     Convenience alias in cutting a solid "left and right" across the Y plane.
     For more fine-grain control: DIY with z_bisect().
     '''
-    left, right = z_bisect(solid.roty(90))
+    left, right = z_bisect(solid.roty(90), epsilon=epsilon)
     left, right = [item.roty(-90) for item in (left, right)]
     return [left, right]
 
@@ -186,7 +188,7 @@ def z_donut_hole(donut):
     '''
     mask_cube = bounding_box_cube(donut)
     outer = hull(donut)
-    
+
     # intersect the hull(donut) to cut out all the extra crap from bounding box cube.
     res = (mask_cube - donut) & outer
     return res
@@ -203,10 +205,10 @@ def z_hammer_hull_union(top_solid, bottom_solid, full_pierce=False):
     if full_pierce:
         bottom_solid_height = z_height(bottom_solid)
         mn, _ = bounding_box(bottom_solid)
-    
+
         # Create a hole punch to bottom_solid, use projection(hull(top_solid) thru the height of bottom_solid.
         hole_punch = projection(hull(top_solid)).linear_extrude(bottom_solid_height)
-        
+
         # Since we are full_piercing: If there's "below ground" volume, translate the hole_punch accordingly.
         if mn[-1] < 0:
             hole_punch = hole_punch.down(-mn[-1])
@@ -280,7 +282,7 @@ def arc(arc_point_left, arc_point_mid, arc_point_right):
 
     TODO: Live in a different lib?
     '''
-    
+
     mid = midpoint(arc_point_left, arc_point_right)
     a_mid = line_magnitude(arc_point_left, mid)
     b_mid = line_magnitude(mid, arc_point_right)
@@ -296,12 +298,12 @@ def arc(arc_point_left, arc_point_mid, arc_point_right):
     # Major segment to the left, minor segment to the right.
     whole_circle = circle(d=diam)
     whole_circle = whole_circle.right(diam/2).left(major)
-    
+
     minor_segment_mask = square([diam, diam]).front(diam/2)
 
     minor_segment = whole_circle & minor_segment_mask
     major_segment = whole_circle - minor_segment
-    
+
     return [major_segment, minor_segment, diam, major, minor]
 
 def sphere_arc(arc_point_left, arc_point_mid, arc_point_right):
@@ -318,7 +320,7 @@ def sphere_arc(arc_point_left, arc_point_mid, arc_point_right):
     # Make sure masks are z-centered.
     major_mask, minor_mask = [center(shape.linear_extrude(diam), axis=[0, 0, 1])[0] for shape in (major_segment, minor_segment)]
     return [base & major_mask, base & minor_mask, diam, major, minor]
-    
+
 
 def rotate_point_horizontal(pt, angle_offset_deg):
     '''
@@ -334,19 +336,19 @@ def add_single_brim(convex_solid, scale_factor=1.2, height=0.2):
     '''
     Assume solid is already z-aligned.
     Adds a thin brim over the solid's footprint.
-    
+
     Why: prusaslicer only supports outer and inner brim, but not brim over "intermediate" foot print that isn't the inner or outer most perimeter.
-    
+
     This utility applies brim on a uni-convex solid (don't do this to a unioned object that is disjointed in space). This is due to the limitation of scaling. On disjointed objects...the brim would be dislocated from the actual contact point to the build plate.
     '''
     # Relocate to origin for scaling
     tmp, move_vec = center(convex_solid, axis=[1, 1, 0])
     brim = tmp.projection(True).scale([scale_factor, scale_factor, scale_factor])
     brim = brim.linear_extrude(height)
-    
+
     # Restore movement
     brim = brim.translate([-p for p in move_vec])
-    
+
     return [convex_solid | brim, brim]
 
 def debug_find_face_by_normal_vector(solid, estimated_norm_vec, num_faces=1):
@@ -362,13 +364,13 @@ def debug_find_face_by_normal_vector(solid, estimated_norm_vec, num_faces=1):
         f.matrix from faces() -> 3rd column = normal vector.
         '''
         return [row[2] for row in trans_matrix[:3]]
-    
+
     def dist(x_mag, y_mag, z_mag):
         '''
         Get scalar of the magnitude between 2 vectors.
         '''
         return math.sqrt(x_mag ** 2 + y_mag ** 2 + z_mag ** 2)
-    
+
     def iterate_faces():
         '''
         Helper function to preprocess the items we need for evaluating faces in ranked order closest to arg estimated_norm_vec.
@@ -380,7 +382,7 @@ def debug_find_face_by_normal_vector(solid, estimated_norm_vec, num_faces=1):
             yield (f, idx, d)
 
     best_matched_faces = heapq.nsmallest(num_faces, iterate_faces(), key=lambda tup: tup[2])
-    
+
     # Reformat the output to list of 3 lists: [faces], [index], [dist].
     # It's a simple transpose. Need to deref the tuples to flatten before rewrap as lists. Both arg to zip, and zip's output (which default to tuple).
     return [[*dim] for dim in zip(*best_matched_faces)]
@@ -391,10 +393,10 @@ def debug_face_indicators(solid, indicator = sphere(0.5), indicator_color = 'yel
     A generator of solids transposed to vertices indicating a face.
     Relies on mesh() underneath.
 
-    Designed for debugging uses to deep dive on mesh(). 
+    Designed for debugging uses to deep dive on mesh().
 
     User can show() each of the element returned by the generator.
-    
+
     Since a solid can have MANY vertices: use itertools.islice() to efficency loop thru faces without pre-storing all the vertices x indicators.
 
     Note: Each generator yield is a list of indicator shapes, in which displayed together shows the vertices of a face.
