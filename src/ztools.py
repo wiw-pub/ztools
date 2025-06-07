@@ -148,7 +148,7 @@ def z_height(solid, mn = None, mx = None):
     '''
     return magnitudes(solid, mn, mx)[-1]
 
-def z_bisect(solid, top_mask=None, epsilon=0.1):
+def z_bisect(solid, top_mask=None, epsilon=0.001):
     '''
     Horizontal chop, given (optional) top mask.
     If top mask is unspecified, xy-plane is used as the cut line.
@@ -177,7 +177,7 @@ def z_bisect(solid, top_mask=None, epsilon=0.1):
     bottom = solid - hull(top).scale([1 + epsilon, 1 + epsilon, 1 + epsilon])
     return [top, bottom]
 
-def y_bisect(solid, epsilon=0.1):
+def y_bisect(solid, epsilon=0.001):
     '''
     Convenience alias in cutting a solid "left and right" across the Y plane.
     For more fine-grain control: DIY with z_bisect().
