@@ -158,6 +158,10 @@ def z_bisect(solid, top_mask=None, epsilon=0.1):
         # Just need the xy dimensions.
         mn, mx = bounding_box(solid)
 
+        if any(not coord for coord in (mn, mx)):
+            # defensive check if there's nothing to z_bisect because solid does not span across Z plane
+            raise ValueError(f"arg solid does not span across Z axis. Therefore, nothing to z_bisect(). Bounding boxes found: {mn=}, {mx=}")
+
         # Clock wise points
         xy_points = [
             [p - epsilon for p in mn[:2]],   # lower left
