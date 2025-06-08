@@ -245,13 +245,13 @@ def masked_map(mask, solid, func=lambda shape: shape.scale([0.5, 0.5, 1])):
 
     For demo purposes, func is preassigned to scaling 50% on xy direction. Pass in an explicit lambda for your use case.
 
-    Returns [ (Apply(operating_vol) | untouched), Apply(operating_vol), untouched ]. The non-first element are for debugging purposes.
+    Returns [Apply(operating_vol), operating_vol, untouched ]. This generic form supports cases where func may be splitting the solid into multiple solids.
     '''
     operating_vol = solid & mask
     untouched = solid - operating_vol
     post_op = func(operating_vol)
 
-    return [ (post_op | untouched), operating_vol, post_op, untouched ]
+    return [post_op, operating_vol, untouched ]
 
 def to_matrix(vec):
     x, y, z = vec
