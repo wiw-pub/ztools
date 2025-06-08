@@ -1,6 +1,8 @@
 from openscad import *
 
 import math, heapq
+from collections.abc import Iterable
+
 '''
 WIP: generalized set of operators for higher-level abstraction for pythonscad.
 '''
@@ -266,7 +268,13 @@ def masked_map(mask, solid, func=lambda shape: shape.scale([0.5, 0.5, 1]), auto_
     if auto_center:
         # Undo the movement
         undo_vec = [-d for d in move_vec]
-        post_op = post_op.translate(undo_vec)
+
+        if isinstance(post_op, Iterable):
+            # TODO: Only supports single level collections for now.
+            post_op = [post_op.translate(undo_vec) for item in post_op]
+        else:
+            post_op = post_op.translate(undo_vec)
+
         operating_vol = operating_vol.translate(undo_vec)
 
     return [post_op, operating_vol, untouched]
