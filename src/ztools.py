@@ -1,12 +1,13 @@
 from openscad import *
 
-import math, heapq
+import math, heapq, functools
 from collections.abc import Iterable
 
 '''
 WIP: generalized set of operators for higher-level abstraction for pythonscad.
 '''
 
+@functools.cache
 def bounding_box(solid):
     '''
     Returns bounding box as a 2-element list of (x, y, z) coordinates.
