@@ -235,9 +235,16 @@ def rolling_hull(solid, path):
 
     return [union(whole_path)] + vertices
 
-def masked_map(mask, solid, func=lambda shape: shape.scale([0.5, 0.5, 1])):
+def masked_map(mask, solid, func=lambda shape: shape.scale([0.5, 0.5, 1]), auto_center=True):
     '''
     Only apply a lambda over the masked volume.
+
+    Parameters:
+        mask: mask over the solid to perform the lambda.
+        solid: input solid
+        func: lambda to execute on masked shape.
+        auto_center: auto center the masked off shape to origin before executing func. 
+            Default is True. If on, the post_op shape is restored back to original position before returning.
 
     Use case: fillet only the masked volume, but leave the rest alone.
     Operating_vol = Solid & mask
@@ -249,9 +256,20 @@ def masked_map(mask, solid, func=lambda shape: shape.scale([0.5, 0.5, 1])):
     '''
     operating_vol = solid & mask
     untouched = solid - operating_vol
+
+    if auto_center:
+        # Move masked shape to center before executing.
+        operating_vol, move_vec = center(operating_vol)
+    
     post_op = func(operating_vol)
 
-    return [post_op, operating_vol, untouched ]
+    if auto_center:
+        # Undo the movement
+        undo_vec = [-d for d in move_vec]
+        post_op = post_op.translate(undo_vec)
+        operating_vol = operating_vol.translate(undo_vec)
+
+    return [post_op, operating_vol, untouched]
 
 def to_matrix(vec):
     x, y, z = vec
