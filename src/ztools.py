@@ -271,7 +271,7 @@ def masked_map(mask, solid, func=lambda shape: shape.scale([0.5, 0.5, 1]), auto_
 
         if isinstance(post_op, Iterable):
             # TODO: Only supports single level collections for now.
-            post_op = [post_op.translate(undo_vec) for item in post_op]
+            post_op = [item.translate(undo_vec) for item in post_op]
         else:
             post_op = post_op.translate(undo_vec)
 
