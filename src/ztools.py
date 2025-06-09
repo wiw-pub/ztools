@@ -29,6 +29,18 @@ def bounding_box_cube(solid, mn = None, mx = None):
     center_vector = [(b + a) / 2 for a, b in zip(mn, mx)]
     return cube(lengths, center=True).translate(center_vector)
 
+def bounding_box_volume(solid, mn = None, mx = None):
+    '''
+    Computes the volume of the bounding box for a solid.
+
+    Optionally: supply mn and mx to avoid recomputing bounding box. See bounding_box() for more details.
+    '''
+    if not mn or not mx:
+        mn, mx = bounding_box(solid)
+
+    mag_x, mag_y, mag_z = magnitudes(solid, mn, mx)
+    return mag_x * mag_y * mag_z
+
 def center(solid, axis = [1, 1, 1], mn = None, mx = None):
     '''
     Center the solid on origin with bounding box.
