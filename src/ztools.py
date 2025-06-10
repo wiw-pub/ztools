@@ -74,7 +74,7 @@ def offset_3d(solid, delta = [1, 1, 1], auto_center=True, mn = None, mx = None):
     # Do this if auto_center=True.
     at_origin = solid
     if auto_center:
-        at_origin, move_vector_used = center(solid, mn, mx)
+        at_origin, move_vector_used = center(solid, mn=mn, mx=mx)
 
     # delta is apply on "all sides".
     resized = at_origin.resize([(x_mag + 2 * dx), (y_mag + 2 * dy), (z_mag + 2 * dz)])
