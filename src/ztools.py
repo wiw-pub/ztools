@@ -471,48 +471,13 @@ def debug_face_coordinates(solid):
         yield coords
 
 
-class Dovetail:
+class LappedCuts:
+    '''
+    Utility class encapsulating lapped cuts (e.g., dovetail, puzzle pieces).
+    General recommendation: Use circular lugs for efficient prints with minimum artifacts.
+    '''
     def __init__(self):
         pass
-
-    def dovetail(self, h, dovetail_big_width, dovetail_small_width, dovetail_height):
-        '''
-        Helper method to create dovetail base shape.
-        '''
-        # trapezoid
-        pts = [
-            [-dovetail_big_width/2, 0], 
-            [dovetail_big_width/2, 0], 
-            [dovetail_small_width/2, dovetail_height], 
-            [-dovetail_small_width/2, dovetail_height], 
-            [-dovetail_big_width/2, 0]
-        ]
-        trap = polygon(pts).rotz(90).linear_extrude(h)
-        trap = center(trap, axis=[1, 1, 0])[0]
-        return trap
-
-    def lug(self, h, radius, locking_offset):
-        '''
-        Circular lug
-        '''
-        lug = cylinder(r=radius, h = h)
-        
-        # male part will be lhs, meaning we want the locking wedge on the right.
-        lug = lug.right(locking_offset)
-        return lug
-    
-    def y_lug_cut(self, solid, mn, mx, lug_radius, base_offset, symmetry=False, epsilon=0.001):
-        '''
-        Convenient function for performing a single lug cut.
-        '''
-        if mn is None or mx is None:
-            raise ValueError('Please explicitly pass in mn and mx from bounding_box(solid).')
-
-        _, _, h = mx
-        
-        # TODO: Hardcode the lug offset for now.
-        lock = lug(h, lug_radius, 0.70 * lug_radius)
-        return y_lapped_cut(solid, lock, base_offset=base_offset, symmetry=symmetry, epsilon=epsilon)
 
     def y_lapped_cut(self, solid, lock_mask_list, base_offset, symmetry=False, epsilon=0.001):
         '''
@@ -545,9 +510,6 @@ class Dovetail:
         if symmetry:
             hollow = difference(hollow, reverse_locks)
 
-
-
-        
         # Slice the bottom. Only applicable for non-zero base offset.
         top, bottom = z_bisect(hollow, epsilon=epsilon)
             
@@ -578,3 +540,46 @@ class Dovetail:
             female = union(right, b_right)
         
         return [male, female]
+
+    def lug(self, h, lug_radius, locking_offset=None):
+        '''
+        Circular lug
+        '''
+        if locking_offset is None:
+            # default
+            locking_offset = 0.70 * lug_radius
+
+        lug = cylinder(r=lug_radius, h = h)
+        
+        # male part will be lhs, meaning we want the locking wedge on the right.
+        lug = lug.right(locking_offset)
+        return lug
+    
+    def dovetail(self, h, dovetail_big_width, dovetail_small_width, dovetail_height):
+        '''
+        Helper method to create dovetail base shape.
+        '''
+        # trapezoid
+        pts = [
+            [-dovetail_big_width/2, 0], 
+            [dovetail_big_width/2, 0], 
+            [dovetail_small_width/2, dovetail_height], 
+            [-dovetail_small_width/2, dovetail_height], 
+            [-dovetail_big_width/2, 0]
+        ]
+        trap = polygon(pts).rotz(90).linear_extrude(h)
+        trap = center(trap, axis=[1, 1, 0])[0]
+        return trap
+    
+    def y_lug_cut(self, solid, mn, mx, lug_radius, base_offset, symmetry=False, epsilon=0.001):
+        '''
+        Reference function for performing a single lug cut.
+        '''
+        if mn is None or mx is None:
+            raise ValueError('Please explicitly pass in mn and mx from bounding_box(solid).')
+
+        _, _, h = mx
+        
+        # TODO: Hardcode the lug offset for now.
+        lock = lug(h, lug_radius, 0.70 * lug_radius)
+        return y_lapped_cut(solid, lock, base_offset=base_offset, symmetry=symmetry, epsilon=epsilon)
