@@ -479,7 +479,7 @@ class LappedCuts:
     def __init__(self):
         pass
 
-    def y_lapped_cut(self, solid, lock_mask_list, base_offset, symmetry=False, epsilon=0.001):
+    def y_lapped_cut(self, solid, lock_mask_list, base_offset, symmetry=False, epsilon=0.001, fit_tolerance=0.02):
         '''
         Generalized function for making dovetail-like cut.
         lock_mask can be classic dovetail, circular lug, etc.
@@ -491,6 +491,7 @@ class LappedCuts:
             base_offset: Positive offset extending base for the "female" part of the dovetail (negative not yet supported).
             symmetry: True if you want dovetail/lug locking on both sides. Must have non-zero base_offset.
             epsilon: Optional param to combat z-fighting.
+            fit_tolerance: based on your printer, the tolerance gap between the lapped cuts.
         '''
         
         if symmetry and base_offset == 0:
@@ -505,9 +506,12 @@ class LappedCuts:
         reverse_locks = [reverse_lock.roty(180).left(base_offset) for reverse_lock in reverse_locks]
         
         # Preprocessing to hollow out where dovetail would sit.
+        # Scale up the locks for tolerance
+        # hollow = difference(solid, [lock.scale([1 + fit_tolerance, 1 + fit_tolerance, 1 + fit_tolerance]) for lock in locks])
         hollow = difference(solid, locks)
         
         if symmetry:
+            # hollow = difference(hollow, [lock.scale([1 + fit_tolerance, 1 + fit_tolerance, 1 + fit_tolerance]) for lock in reverse_locks])
             hollow = difference(hollow, reverse_locks)
 
         # Slice the bottom. Only applicable for non-zero base offset.
@@ -515,6 +519,9 @@ class LappedCuts:
             
         # Cut left and right.
         left, right = y_bisect(hollow, epsilon=epsilon)
+    
+        # show(hollow.color('purple'))
+    
         
         # Override right with the larger base_offset.
         b_right = None
@@ -524,18 +531,18 @@ class LappedCuts:
             
             # Include the bottom lock (dovetail/lug) if symmetry is on.
             if symmetry:
-                # b_right |= reverse_lock
                 b_right = union(b_right, reverse_locks)
         
+
         # Attach dovetail to and mask the base offsets.
         # Epsilon for z-fighting.
-        # male = (left | lock) 
         male = union(left, locks)
         female = right
         
         if b_right:
             # TODO: Hull seem to fix some z-fighting issues. But won't work if symmetry=True.
-            male -= b_right.scale([1 + epsilon, 1 + epsilon, 1 + epsilon])
+            # male -= b_right.scale([1 + epsilon, 1 + epsilon, 1 + epsilon])
+            male = difference(male, b_right.scale([1 + epsilon, 1 + epsilon, 1 + epsilon]))
             #male -= hull(b_right.scale([1 + epsilon, 1 + epsilon, 1 + epsilon]))
             female = union(right, b_right)
         
