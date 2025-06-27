@@ -504,11 +504,16 @@ class LappedCuts:
         reverse_locks = [lock_mask & solid.right(base_offset).roty(180) for lock_mask in locks]
         # Restore orientation.
         reverse_locks = [reverse_lock.roty(180).left(base_offset) for reverse_lock in reverse_locks]
+
         
         # Preprocessing to hollow out where dovetail would sit.
         # Scale up the locks for tolerance
         # hollow = difference(solid, [lock.scale([1 + fit_tolerance, 1 + fit_tolerance, 1 + fit_tolerance]) for lock in locks])
-        hollow = difference(solid, locks)
+        # hollow = difference(solid, locks)
+
+        # Debugging: This does not need z-fighting. It means mask & solid resulted in z-fighting. Scaling is not a sufficient solution.
+        # TODO: Make a clone of reverse_locks, but source is mask not mask & solid.
+        hollow = difference(solid, lock_mask_list)
         
         if symmetry:
             # hollow = difference(hollow, [lock.scale([1 + fit_tolerance, 1 + fit_tolerance, 1 + fit_tolerance]) for lock in reverse_locks])
