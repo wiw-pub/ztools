@@ -512,8 +512,10 @@ class LappedCuts:
         # hollow = difference(solid, locks)
 
         # Debugging: This does not need z-fighting. It means mask & solid resulted in z-fighting. Scaling is not a sufficient solution.
+        # Make the diff holes bigger, for print tolerances. BUT THIS GAPS THE MALE SIDE.
+        # TODO: bisect FIRST and then hollow holes, such that female side gets offset_3d+ for tolerances.
         # TODO: Make a clone of reverse_locks, but source is mask not mask & solid.
-        hollow = difference(solid, lock_mask_list)
+        hollow = difference(solid, [offset_3d(lock, delta=[fit_tolerance, fit_tolerance, fit_tolerance]) for lock in lock_mask_list])
         
         if symmetry:
             # hollow = difference(hollow, [lock.scale([1 + fit_tolerance, 1 + fit_tolerance, 1 + fit_tolerance]) for lock in reverse_locks])
