@@ -521,8 +521,8 @@ class LappedCuts:
         left, right = y_bisect(hollow, epsilon=epsilon)
     
         # show(hollow.color('purple'))
+        # return hollow
     
-        
         # Override right with the larger base_offset.
         b_right = None
         if base_offset != 0:
@@ -536,9 +536,12 @@ class LappedCuts:
 
         # Attach dovetail to and mask the base offsets.
         # Epsilon for z-fighting.
-        male = union(left, locks)
+        # male = union(left, locks)
+
+        # XXX: This lazy union may break symmetry case when difference() is done on them.
+        male = [left] + locks
         female = right
-        
+
         if b_right:
             # TODO: Hull seem to fix some z-fighting issues. But won't work if symmetry=True.
             # male -= b_right.scale([1 + epsilon, 1 + epsilon, 1 + epsilon])
@@ -547,6 +550,7 @@ class LappedCuts:
             female = union(right, b_right)
         
         return [male, female]
+
 
     def lug(self, h, lug_radius, locking_offset=None):
         '''
