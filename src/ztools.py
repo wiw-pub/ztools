@@ -601,3 +601,13 @@ class LappedCuts:
         # TODO: Hardcode the lug offset for now.
         lock = lug(h, lug_radius, 0.70 * lug_radius)
         return y_lapped_cut(solid, lock, base_offset=base_offset, symmetry=symmetry, epsilon=epsilon)
+        
+        
+    def poor_man_fillet(self, mask, solid, minkowski_radius, xyz_radius_vector):
+        '''
+        EXPERIMENTAL.
+            hull((original shape - mask), masked_map(mask, offset_3d + minkowski))
+            Works for convex, if xyz_radius_vector is user specified carefully.
+            Have not tested with concave.
+        '''
+        pass
