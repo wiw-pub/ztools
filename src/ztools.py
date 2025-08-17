@@ -603,11 +603,25 @@ class LappedCuts:
         return y_lapped_cut(solid, lock, base_offset=base_offset, symmetry=symmetry, epsilon=epsilon)
         
         
-    def poor_man_fillet(self, mask, solid, minkowski_radius, xyz_radius_vector):
+    def poor_fillet(self, mask, solid, minkowski_radius, xyz_radius_vector):
         '''
         EXPERIMENTAL.
+        Apply convex smooth curves to butting edges.
+        Use case: You need to round out a peg to go into a hole smoothly.
             hull((original shape - mask), masked_map(mask, offset_3d + minkowski))
             Works for convex, if xyz_radius_vector is user specified carefully.
             Have not tested with concave.
+        '''
+        pass
+    
+    def poor_chamfer(self, mask):
+        '''
+        EXPERIMENTAL.
+        Apply concave smooth curves to butting edges (commonly known as "chamfer").
+        Use case: you need to round out a hole for a peg to go in smoothly
+            Take a negative of the solid with a hole.
+            Generate that peg.
+            minkowski or apply a cone.
+            solid - conical_peg.
         '''
         pass
