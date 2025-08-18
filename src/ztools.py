@@ -605,25 +605,39 @@ class LappedCuts:
         return y_lapped_cut(solid, lock, base_offset=base_offset, symmetry=symmetry, epsilon=epsilon)
         
         
-    def poor_fillet(self, mask, solid, minkowski_radius, xyz_radius_vector):
+    def simple_fillet(self, mask, solid):
         '''
         EXPERIMENTAL.
         Apply convex smooth curves to butting edges.
         Use case: You need to round out a peg to go into a hole smoothly.
-            hull((original shape - mask), masked_map(mask, offset_3d + minkowski))
-            Works for convex, if xyz_radius_vector is user specified carefully.
-            Have not tested with concave.
+        
+        Caller can union back with solid (for lazy union efficiencies).
         '''
-        pass
+        # Apply the hull for the masked area.
+        # XXX: If auto_center=True, make sure func=union(hull(shape)).
+        # Otherwise: the undo-move vector would not be "centered" per hull component.
+        masked_shape, operating_vol, solid_minus_mask = masked_map(uni_mask, solid, func=lambda shape: hull(shape), auto_center=False)
+        
+        return [masked_shape, solid_minus_mask]
     
-    def poor_chamfer(self, mask):
+    def simple_chamfer(self, mask, solid):
         '''
         EXPERIMENTAL.
         Apply concave smooth curves to butting edges (commonly known as "chamfer").
         Use case: you need to round out a hole for a peg to go in smoothly
             Take a negative of the solid with a hole.
-            Generate that peg.
-            minkowski or apply a cone.
-            solid - conical_peg.
+            Generate that peg. Hull it.
+            chamfer = solid - hulled_peg.
         '''
-        pass
+            
+        # XXX: This implementation would chamfer in the shape of the mask as well.
+        # The whole chamfer RELIES on this since it hulls the peg.
+        peg = uni_mask - solid
+        filleted_peg, _ = simple_fillet(uni_mask, peg)
+        
+        post_op = solid - filleted_peg
+        
+        # For signature completeness only.
+        solid_minus_mask = solid - peg
+        
+        return [post_op, solid_minus_mask]
