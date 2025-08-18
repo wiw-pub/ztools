@@ -474,7 +474,7 @@ def debug_face_coordinates(solid):
 
 
     
-def simple_fillet(mask, solid):
+def simple_fillet(uni_mask, solid):
     '''
     EXPERIMENTAL.
     Apply convex smooth curves to butting edges.
@@ -489,7 +489,7 @@ def simple_fillet(mask, solid):
     
     return [masked_shape, solid_minus_mask]
 
-def simple_chamfer(mask, solid):
+def simple_chamfer(uni_mask, solid):
     '''
     EXPERIMENTAL.
     Apply concave smooth curves to butting edges (commonly known as "chamfer").
