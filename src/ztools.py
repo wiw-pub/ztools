@@ -85,8 +85,9 @@ def offset_3d(solid, delta = [1, 1, 1], auto_center=True, mn = None, mx = None):
         res = resized.translate([-dim for dim in move_vector_used])
     return res
 
-def axis_aligned(solid, axis = [0, 0, 1], mn = None, mx = None):
+def __old__axis_aligned(solid, axis = [0, 0, 1], mn = None, mx = None):
     '''
+    DEPRECATED.
     Generalized bounding box aligner. Defaults to positive z-axis.
     Works for negative axis for "below" alignment.
     Will downscale with fractions in axis, but that's not necessarily intended.
@@ -116,6 +117,46 @@ def axis_aligned(solid, axis = [0, 0, 1], mn = None, mx = None):
         res = op(res, minimums * ax) if ax >= 0 else neg_op(res, maximums * -ax)
     return res
 
+
+def axis_aligned(solid, axis = [0, 0, 1], mn = None, mx = None):
+    '''
+    Generalized bounding box aligner. Defaults to positive z-axis.
+    Works for negative axis for "below" alignment.
+    Will downscale with fractions in axis, but that's not necessarily intended.
+    
+    Returns: [aligned_solid, move_vec]
+    '''
+    
+    if not mn or not mx:
+        mn, mx = bounding_box(solid)
+
+    if any([abs(a) > 1 for a in axis]):
+        raise Exception("Each axis argument must be in the inclusive range of [-1, 1]")
+
+    # translate vector for the solid in the positive direction of the axis, such that the minimum bounds touch the axis zeroes.
+    ops = (
+        lambda s, minimums: [-minimums, 0, 0],
+        lambda s, minimums: [0, -minimums, 0] ,
+        lambda s, minimums: [0, 0, -minimums],
+    )
+
+    # translate vector for the solid in the negative direction of the axis, such that the maximum bounds touch the axis zeroes.
+    neg_ops = (
+        lambda s, maximums: [-maximums, 0, 0],
+        lambda s, maximums: [0, -maximums, 0],
+        lambda s, maximums: [0, 0, -maximums],
+    )
+
+    component_vectors = []
+    for op, neg_op, minimums, maximums, ax in zip(ops, neg_ops, mn, mx, axis):
+        partial_vec = op(solid, minimums * ax) if ax >= 0 else neg_op(solid, maximums * -ax)
+        component_vectors.append(partial_vec)
+        
+    # reduce the component vector to final vector.
+    final_move_vec = [sum(*dims) for dims in zip(component_vectors)]
+    
+    return [solid.translate(final_move_vec), final_move_vec]
+
 def z_aligned(solid, mn = None, mx = None):
     '''
     Raise the whole solid above zero-z.
@@ -128,6 +169,8 @@ def z_aligned(solid, mn = None, mx = None):
     (Technically mx is not needed, and won't be checked. But present to keep function signature consistent with other bbox based functions).
 
     Returns post-translate solid.
+
+    TODO: Upgrade to return [moved_solid, move_vec].
     '''
     # if not mn:
     #     mn, _ = bounding_box(solid)
@@ -135,10 +178,14 @@ def z_aligned(solid, mn = None, mx = None):
     # _, _, z = mn
     # return solid.up(-z)
 
-    return axis_aligned(solid, axis = [0, 0, 1], mn=mn, mx=mx)
+    return axis_aligned(solid, axis = [0, 0, 1], mn=mn, mx=mx)[0]
 
 def xy_aligned(solid, mn = None, mx = None):
-    return axis_aligned(solid, axis = [1, 1, 0], mn=mn, mx=mx)
+    '''
+    Convenient function to align the solid on positive x-axis and y-axis.
+    TODO: Upgrade to return [moved_solid, move_vec].
+    '''
+    return axis_aligned(solid, axis = [1, 1, 0], mn=mn, mx=mx)[0]
 
 def magnitudes(solid, mn = None, mx = None):
     '''
