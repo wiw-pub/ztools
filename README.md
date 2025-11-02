@@ -31,11 +31,7 @@ If you need the flexibility in renaming import aliases, remove the `nimport()` a
 
 It is recommended to use the same folder as File > Show Library Folder in PythonSCAD for simplicity.
 
-Currently, PythonSCAD does not automatically add this folder to sys.path when loading PythonScad. Be sure to reuse the `load_openscad_thirdparty_lib()` function in the previous section.
-
-Manually copy your libraries to the File > Show Library Folder path.
-
-Execute `load_openscad_thirdparty_lib()` in your PythonSCAD script to setup sys.path
+Manually copy your libraries to the File > Show Library Folder path (e.g., download from github as local file, and copy them over).
 
 Execute the standard imports such as `import honeycomb as hc`.
 
