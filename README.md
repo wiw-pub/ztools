@@ -14,44 +14,12 @@ Two ways:
 
 Libs in public repo supports using nimport(). See https://www.reddit.com/r/OpenPythonSCAD/comments/1g3s2j5/have_your_libraries_with_you_wherever_you_are/m85l097/ for more info.
 
-(Following example is for Windows installation. You can modify the library path based on File > Show Library Folder path).
-
-Copy and paste this into your PythonSCAD script up top.
-
-```py
-import os
-
-def load_openscad_thirdparty_lib():
-    '''
-    Ensure PythonScad loads third party libraries from its pre-designated library folder path.
-    '''
-
-    # This is the same path as File > Show Library Folder path.
-    LIB_PATH = rf'C:\Users\{os.getlogin()}\Documents\OpenSCAD\libraries'
-
-    if LIB_PATH not in sys.path:
-        sys.path.append(LIB_PATH)
-
-# Now call the function
-load_openscad_thirdparty_lib()
-```
-
-You can optionally verify $PATH has correctly appended in the output window:
-
-```py
-print(sys.path)
-```
-
-After that, you can use nimport() like this:
-
 ```py
 nimport('https://raw.githubusercontent.com/wiw-pub/ztools/refs/heads/main/src/honeycomb.py')
 nimport('https://raw.githubusercontent.com/wiw-pub/ztools/refs/heads/main/src/ztools.py')
 ```
 
 This will store a local copy of these libraries from github to your local "File > Show Library Folder" folder.
-
-IMPORTANT NOTE: `nimport()` will only replace files in your "File > Show Library Folder" if the files are not present. To sync the latest from github, you need to remove your local copies in "File > Show Library Folder".
 
 Usage note: nimport() "replaces" the classic `from honeycomb import *` statement as-if these libraries were part of stdlib or sourced from pip3. As such, you can't "rename" the imports with this convention.
 
