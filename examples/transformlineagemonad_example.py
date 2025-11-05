@@ -59,6 +59,21 @@ def rotate_extrude_usecase():
             '''
             replacement = projection(solid)
             return TransformLineageMonad.ResultWithDelta(replacement, cube(1).origin, [replacement])
+            
+        def rotate_extrude_withdelta(solid, angle):
+            '''
+            rotate_extrude makes origin the "center" of the result solid, but origin is set to identity matrix.
+            use center() move_vec as the delta translation matrix.
+            '''
+            res = solid.rotate_extrude(angle)
+            
+            # center and axis_aligned only works on 3d solids. Raise the height to make it 3d to generate the delta transform matrix.
+            tmp = solid.linear_extrude(1)
+            tmp, move_vec = center(tmp, axis=[1, 1, 0])
+            _, move_vec2 = axis_aligned(tmp, axis=[0, 0, 1])
+            
+            delta = multmatrix(to_matrix(move_vec), to_matrix(move_vec2))
+            return TransformLineageMonad.ResultWithDelta(res, delta, [res])
         
         # IMPORTANT: reference must exist OUTSIDE of the with context to be able to dereference it after context unwind!
         monad = TransformLineageMonad(dumbbell)
@@ -68,49 +83,27 @@ def rotate_extrude_usecase():
         ):
             # All translate/rotate/scale within the with-scope will be unwind after!
             # Good for diff/union solids around the origin, and the context will restore to original position.
-    
-            print(dum.combined_origin)
-            rwd = center_withdelta(dum.solid)
-            res, delta = rwd.result_solid, rwd.delta_transform_matrix
-            print(delta)
-            print(multmatrix(dum.combined_origin, delta))
-            print(divmatrix(res.origin, dum.combined_origin))
-    
             
             # Center the solid around the origin.
             dum_at_origin, _ = dum.apply_mutably(lambda solid: center_withdelta(solid))
-            show(dum_at_origin.solid.color('yellow'))
+#            show(dum_at_origin.solid.color('yellow'))
     
             # Final reposition to be ready for rotate_extrude. It is a 2d projection now.
             dum_ready_for_rotate_extrude, _ = dum_at_origin.apply_mutably(lambda solid: translate_withdelta(solid, [20, 20, 20]))
-            show(dum_ready_for_rotate_extrude.solid.color('cyan'))
+#            show(dum_ready_for_rotate_extrude.solid.color('cyan'))
             
+            # Perform the projection to 2d, right before rotate_extrude.
             dum_ready_for_rotate_extrude, _ = dum_ready_for_rotate_extrude.apply_mutably(lambda solid: projection_withdelta(solid))
             
             # Give it height of 1 to show in render() F6.
-            show(dum_ready_for_rotate_extrude.solid.linear_extrude(1).color('blue'))
-            
-            #print(dum_ready_for_rotate_extrude.combined_origin)
+#            show(dum_ready_for_rotate_extrude.solid.linear_extrude(1).color('blue'))
             
             # Well, it's what rotate_extrude does :)
-            weird_pottery_looking_thing, _ = dum_ready_for_rotate_extrude.apply_mutably(lambda shape: shape.rotate_extrude(180))
-            
-            print('t stack', weird_pottery_looking_thing.transformation_stack)
-            print('t origin', weird_pottery_looking_thing.combined_origin)
-            print('recompose origin', functools.reduce(multmatrix(*weird_pottery_looking_thing.transformation_stack))
-            print(len(weird_pottery_looking_thing.transformation_stack))
-            
-
-            show(weird_pottery_looking_thing.solid.color('orange'))
-            
-            print(weird_pottery_looking_thing.solid.origin)
-            
-            show(weird_pottery_looking_thing.solid.divmatrix(weird_pottery_looking_thing.combined_origin).color('pink'))
-            
-            
+            #weird_pottery_looking_thing, _ = dum_ready_for_rotate_extrude.apply_mutably(lambda shape: shape.rotate_extrude(180))
+            weird_pottery_looking_thing, _ = dum_ready_for_rotate_extrude.apply_mutably(lambda shape: rotate_extrude_withdelta(shape, 180))
         
-        print(len(monad.transformation_stack))
-        print(monad.solid.origin)
+        # Once context exits, all the 4x4 transform matrix will unwind.
+        # The result solid will "move" to the original position and orientation before context started.
         show(monad.solid.color('magenta'))
         
         
