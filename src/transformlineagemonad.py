@@ -24,7 +24,7 @@ class TransformLineageMonad:
     # Logical result of multmatrix() on all the 4x4 matrix in transformation_stack
     # This solely exists, because some solid's origin is not trustworthy due to diff/union resetting origin despite we logically "track" it thru transformation_stack.
     # Have this "cached" compute is an optimization over performing multmatrix() thru transformation_stack all the time.
-    combined_origin: list[list[float]] = field(default_factory = lambda : [cube(1).origin])
+    combined_origin: list[list[float]] = field(default_factory = lambda : cube(1).origin)
     
     '''
     Stack of transformations to end in this solid.
