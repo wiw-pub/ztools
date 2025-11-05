@@ -31,6 +31,8 @@ class TransformLineageMonad:
     If not provided, init with identity matrix.
     '''
     transformation_stack: list[list[list[float]]] = field(default_factory = lambda : [cube(1).origin])
+
+    __checkpoint: int = 1
     
     @dataclass
     class ResultWithDelta:
@@ -117,6 +119,8 @@ class TransformLineageMonad:
         This is naive, assuming solid's origin properly preserve transformations (not always the case, such as rotate_extrude and projection which would "shift" the solid without capturing actual translations/rotations).
         '''
         return divmatrix(after.origin, before.origin)
+    
+    
         
     def __enter__(self):
         '''
