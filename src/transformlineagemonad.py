@@ -120,7 +120,8 @@ class TransformLineageMonad:
         '''
         return divmatrix(after.origin, before.origin)
     
-    
+    def get_checkpoint(self):
+        return self.__checkpoint
         
     def __enter__(self):
         '''
