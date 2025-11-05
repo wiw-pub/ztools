@@ -17,6 +17,7 @@ Libs in public repo supports using nimport(). See https://www.reddit.com/r/OpenP
 ```py
 nimport('https://raw.githubusercontent.com/wiw-pub/ztools/refs/heads/main/src/honeycomb.py')
 nimport('https://raw.githubusercontent.com/wiw-pub/ztools/refs/heads/main/src/ztools.py')
+nimport('https://raw.githubusercontent.com/wiw-pub/ztools/refs/heads/main/src/transformlineagemonad.py')
 ```
 
 This will store a local copy of these libraries from github to your local "File > Show Library Folder" folder.
