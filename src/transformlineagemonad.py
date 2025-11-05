@@ -67,9 +67,7 @@ class TransformLineageMonad:
         evict = self.transformation_stack.pop()
         
         self.combined_origin = divmatrix(self.combined_origin, evict)
-        replacement_solid = self.solid.divmatrix(evict)
-
-        self.solid = replacement_solid
+        self.solid = self.solid.divmatrix(evict)
         return self
     
     def apply_mutably(self, transform_func: Callable[[Openscad], Openscad | List[Any] | ResultWithDelta]) -> TransformLineageMonad | Tuple[TransformLineageMonad, List[Any]]:

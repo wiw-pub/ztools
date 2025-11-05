@@ -1,4 +1,5 @@
 from openscad import *
+import functools
 
 nimport('https://raw.githubusercontent.com/wiw-pub/ztools/refs/heads/monads/src/ztools.py')
 nimport('https://raw.githubusercontent.com/wiw-pub/ztools/refs/heads/monads/src/transformlineagemonad.py')
@@ -93,14 +94,23 @@ def rotate_extrude_usecase():
             
             # Well, it's what rotate_extrude does :)
             weird_pottery_looking_thing, _ = dum_ready_for_rotate_extrude.apply_mutably(lambda shape: shape.rotate_extrude(180))
-            print(weird_pottery_looking_thing.combined_origin)
-            print(weird_pottery_looking_thing.transformation_stack[-1])
+            
+            print('t stack', weird_pottery_looking_thing.transformation_stack)
+            print('t origin', weird_pottery_looking_thing.combined_origin)
+            print('recompose origin', functools.reduce(multmatrix(*weird_pottery_looking_thing.transformation_stack))
             print(len(weird_pottery_looking_thing.transformation_stack))
             
-            print(dir(weird_pottery_looking_thing))
-#            print(weird_pottery_looking_thing.get_checkpoint())
+
             show(weird_pottery_looking_thing.solid.color('orange'))
             
+            print(weird_pottery_looking_thing.solid.origin)
+            
+            show(weird_pottery_looking_thing.solid.divmatrix(weird_pottery_looking_thing.combined_origin).color('pink'))
+            
+            
+        
+        print(len(monad.transformation_stack))
+        print(monad.solid.origin)
         show(monad.solid.color('magenta'))
         
         
