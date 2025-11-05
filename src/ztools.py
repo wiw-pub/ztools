@@ -4,7 +4,7 @@ import math, heapq
 from collections.abc import Iterable
 
 #nimport('https://raw.githubusercontent.com/wiw-pub/ztools/refs/heads/main/src/transformlineagemonad.py')
-nimport('https://github.com/wiw-pub/ztools/blob/monads/src/transformlineagemonad.py')
+nimport('https://raw.githubusercontent.com/wiw-pub/ztools/refs/heads/monads/src/transformlineagemonad.py')
 
 '''
 WIP: generalized set of operators for higher-level abstraction for pythonscad.
