@@ -566,14 +566,14 @@ def simple_chamfer(uni_mask, solid):
 
 
 # Experimental monad based operations.
-def test_offset_3d_withdelta(solid, delta = [1, 1, 1], auto_center=True, mn = None, mx = None):
+def offset_3d_withdelta(solid, delta = [1, 1, 1], auto_center=True, mn = None, mx = None):
     '''
     EXPERIMENTAL FOR TESTING: ResultWithDelta variant of offset_3d in ztools.
     '''
     res = offset_3d(solid, delta, auto_center, mn, mx)
     return TransformLineageMonad.ResultWithDelta(res, cube(1).origin, [res])
     
-def test_center_withdelta(solid, axis = [1, 1, 1], mn = None, mx = None):
+def center_withdelta(solid, axis = [1, 1, 1], mn = None, mx = None):
     '''
     EXPERIMENTAL FOR TESTING: ResultWithDelta variant of center in ztools.
     '''
