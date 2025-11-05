@@ -3,9 +3,15 @@ from openscad import *
 import math, heapq
 from collections.abc import Iterable
 
+from transformlineagemonad import TransformLineageMonad
+
+#nimport('https://raw.githubusercontent.com/wiw-pub/ztools/refs/heads/main/src/transformlineagemonad.py')
+nimport('https://raw.githubusercontent.com/wiw-pub/ztools/refs/heads/monads/src/transformlineagemonad.py')
+
 '''
 WIP: generalized set of operators for higher-level abstraction for pythonscad.
 '''
+
 
 def bounding_box(solid):
     '''
@@ -557,6 +563,28 @@ def simple_chamfer(uni_mask, solid):
     solid_minus_mask = solid - peg
     
     return [post_op, solid_minus_mask]
+
+####################################################################
+# Experimental monad based operations.
+####################################################################
+def offset_3d_withdelta(solid, delta = [1, 1, 1], auto_center=True, mn = None, mx = None):
+    '''
+    EXPERIMENTAL FOR TESTING: ResultWithDelta variant of offset_3d in ztools.
+    '''
+    res = offset_3d(solid, delta, auto_center, mn, mx)
+    return TransformLineageMonad.ResultWithDelta(res, cube(1).origin, [res])
+    
+def center_withdelta(solid, axis = [1, 1, 1], mn = None, mx = None):
+    '''
+    EXPERIMENTAL FOR TESTING: ResultWithDelta variant of center in ztools.
+    '''
+    res, move_vec = center(solid, axis, mn, mx)
+    return TransformLineageMonad.ResultWithDelta(res, to_matrix(move_vec), [res])
+
+
+def axis_aligned_withdelta(solid, axis = [0, 0, 1], mn = None, mx = None):
+    res_solid, move_vec = axis_aligned(solid, axis, mn, mx)
+    return TransformLineageMonad.ResultWithDelta(res_solid, to_matrix(move_vec), [res_solid, move_vec])
 
 
 class LappedCuts:
