@@ -20,6 +20,11 @@ class TransformLineageMonad:
 
     # Pythonscad solid. Typically 3d, but it will also work with 2d solids since transformation matrix is 4x4 in 3d space regardless of 2d or 3d solid.
     solid: Openscad
+
+    # Logical result of multmatrix() on all the 4x4 matrix in transformation_stack
+    # This solely exists, because some solid's origin is not trustworthy due to diff/union resetting origin despite we logically "track" it thru transformation_stack.
+    # Have this "cached" compute is an optimization over performing multmatrix() thru transformation_stack all the time.
+    combined_origin: list[list[float]] = field(default_factory = lambda : [cube(1).origin])
     
     '''
     Stack of transformations to end in this solid.
@@ -44,8 +49,10 @@ class TransformLineageMonad:
         new_stack = []
         for matrix in self.transformation_stack:
             new_stack.append([row[:] for row in matrix])
+        
+        new_origin = [row[:] for row in self.combined_origin]
                 
-        return TransformLineageMonad(self.solid, new_stack)
+        return TransformLineageMonad(self.solid, new_origin, new_stack)
         
     def undo_mutably(self) -> TransformLineageMonad:
         '''
@@ -55,7 +62,11 @@ class TransformLineageMonad:
         if not self.transformation_stack:
             raise IndexError('transformation stack is empty. Cannot undo_mutably()')
         
-        replacement_solid = self.solid.divmatrix(self.transformation_stack.pop())
+        evict = self.transformation_stack.pop()
+        
+        self.combined_origin = divmatrix(self.combined_origin, evict)
+        replacement_solid = self.solid.divmatrix(evict)
+
         self.solid = replacement_solid
         return self
     
@@ -92,13 +103,18 @@ class TransformLineageMonad:
         delta = self.__component_matrix(self.solid, replacement) if not override_delta_transform_matrix else override_delta_transform_matrix
         
         self.transformation_stack.append(delta)
+        self.combined_origin = multmatrix(self.combined_origin, delta)
         self.solid = replacement
 
         return self, post_transform
         
-    def __component_matrix(self, before, after) -> List[List[float]]:
+    def __component_matrix(self, replacement):
+        return divmatrix(replacement.origin, self.combined_origin)
+    
+    def __component_matrix_naive(self, before, after) -> List[List[float]]:
         '''
-        Ident the delta 4x4 matrix transformation
+        Ident the delta 4x4 matrix transformation using two solid's origin divmatrix.
+        This is naive, assuming solid's origin properly preserve transformations (not always the case, such as rotate_extrude and projection which would "shift" the solid without capturing actual translations/rotations).
         '''
         return divmatrix(after.origin, before.origin)
         
