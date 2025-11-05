@@ -586,6 +586,42 @@ def axis_aligned_withdelta(solid, axis = [0, 0, 1], mn = None, mx = None):
     res_solid, move_vec = axis_aligned(solid, axis, mn, mx)
     return TransformLineageMonad.ResultWithDelta(res_solid, to_matrix(move_vec), [res_solid, move_vec])
 
+def translate_withdelta(solid, move_vec):
+    '''
+    translate's divmatrix seems to be non-invertible (e.g., if you translate() forward, and do divmatrix() on its origin, you will NOT return to where you had started).
+    
+    We can explicitly override by specifying the actual component transformation matrix (which is just 4x4 version of move_vec arg to translate()).
+    '''
+    replacement = solid.translate(move_vec)
+    return TransformLineageMonad.ResultWithDelta(replacement, to_matrix(move_vec), [replacement])
+    
+def projection_withdelta(solid):
+    '''
+    projection seem to "reset" solid's origin.
+    
+    For proper lineage construction, it needs to preserve lineage.
+    
+    We can override the component transform matrix with identity matrix (noop movement).
+    '''
+    replacement = projection(solid)
+    return TransformLineageMonad.ResultWithDelta(replacement, cube(1).origin, [replacement])
+    
+def rotate_extrude_withdelta(solid, angle):
+    '''
+    rotate_extrude makes origin the "center" of the result solid, but origin is set to identity matrix.
+    
+    use center() move_vec as the delta translation matrix.
+    '''
+    res = solid.rotate_extrude(angle)
+    
+    # center and axis_aligned only works on 3d solids. Raise the height to make it 3d to generate the delta transform matrix.
+    tmp = solid.linear_extrude(1)
+    tmp, move_vec = center(tmp, axis=[1, 1, 0])
+    _, move_vec2 = axis_aligned(tmp, axis=[0, 0, 1])
+    
+    delta = multmatrix(to_matrix(move_vec), to_matrix(move_vec2))
+    return TransformLineageMonad.ResultWithDelta(res, delta, [res])
+
 
 class LappedCuts:
     '''
