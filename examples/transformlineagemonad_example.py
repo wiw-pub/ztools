@@ -28,7 +28,7 @@ def rotate_extrude_usecase():
     dumbbell = dumbbell.translate([20, 20, 20]).rotx(20).roty(20)
     
     
-    show(dumbbell)
+    show(dumbbell.color('white'))
 
 
     def with_monad():
@@ -49,7 +49,15 @@ def rotate_extrude_usecase():
             '''
             replacement = solid.translate(move_vec)
             return TransformLineageMonad.ResultWithDelta(replacement, to_matrix(move_vec), [replacement])
-        
+            
+        def projection_withdelta(solid):
+            '''
+            projection seem to "reset" solid's origin.
+            For proper lineage construction, it needs to preserve lineage.
+            We can override the component transform matrix with identity matrix (noop movement).
+            '''
+            replacement = projection(solid)
+            return TransformLineageMonad.ResultWithDelta(replacement, cube(1).origin, [replacement])
         
         # IMPORTANT: reference must exist OUTSIDE of the with context to be able to dereference it after context unwind!
         monad = TransformLineageMonad(dumbbell)
@@ -59,26 +67,38 @@ def rotate_extrude_usecase():
         ):
             # All translate/rotate/scale within the with-scope will be unwind after!
             # Good for diff/union solids around the origin, and the context will restore to original position.
+    
+            print(dum.combined_origin)
+            rwd = center_withdelta(dum.solid)
+            res, delta = rwd.result_solid, rwd.delta_transform_matrix
+            print(delta)
+            print(multmatrix(dum.combined_origin, delta))
+            print(divmatrix(res.origin, dum.combined_origin))
+    
             
             # Center the solid around the origin.
             dum_at_origin, _ = dum.apply_mutably(lambda solid: center_withdelta(solid))
-            #show(dum_at_origin.solid)
-    
-            # Minor Reposition 
-            dum_at_origin = dum_at_origin.apply_mutably(lambda solid: solid.rotx(90))
-            #show(dum_at_origin.solid)
+            show(dum_at_origin.solid.color('yellow'))
     
             # Final reposition to be ready for rotate_extrude. It is a 2d projection now.
             dum_ready_for_rotate_extrude, _ = dum_at_origin.apply_mutably(lambda solid: translate_withdelta(solid, [20, 20, 20]))
-            show(dum_ready_for_rotate_extrude.solid)
-            #dum_ready_for_rotate_extrude = dum_ready_for_rotate_extrude.apply_mutably(lambda solid: projection(solid))
-            #show(dum_ready_for_rotate_extrude.solid)
+            show(dum_ready_for_rotate_extrude.solid.color('cyan'))
+            
+            dum_ready_for_rotate_extrude, _ = dum_ready_for_rotate_extrude.apply_mutably(lambda solid: projection_withdelta(solid))
+            
+            # Give it height of 1 to show in render() F6.
+            show(dum_ready_for_rotate_extrude.solid.linear_extrude(1).color('blue'))
+            
+            #print(dum_ready_for_rotate_extrude.combined_origin)
             
             # Well, it's what rotate_extrude does :)
-            #weird_pottery_looking_thing = dum_ready_for_rotate_extrude.apply_mutably(lambda shape: shape.rotate_extrude(180))
-            #show(weird_dog_bowl_looking_thing.solid)
-        
-        show(monad.solid)
+            weird_pottery_looking_thing, _ = dum_ready_for_rotate_extrude.apply_mutably(lambda shape: shape.rotate_extrude(180))
+            print(weird_pottery_looking_thing.combined_origin)
+            print(weird_pottery_looking_thing.transformation_stack[-1])
+            print(len(weird_pottery_looking_thing.transformation_stack), weird_pottery_looking_thing.get_checkpoint())
+            show(weird_pottery_looking_thing.solid.color('orange'))
+            
+        show(monad.solid.color('magenta'))
         
         
     with_monad()

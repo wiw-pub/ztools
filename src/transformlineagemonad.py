@@ -109,6 +109,9 @@ class TransformLineageMonad:
         self.solid = replacement
 
         return self, post_transform
+    
+    def get_checkpoint(self):
+        return self.__checkpoint
         
     def __component_matrix(self, replacement):
         return divmatrix(replacement.origin, self.combined_origin)
@@ -119,9 +122,6 @@ class TransformLineageMonad:
         This is naive, assuming solid's origin properly preserve transformations (not always the case, such as rotate_extrude and projection which would "shift" the solid without capturing actual translations/rotations).
         '''
         return divmatrix(after.origin, before.origin)
-    
-    def get_checkpoint(self):
-        return self.__checkpoint
         
     def __enter__(self):
         '''
