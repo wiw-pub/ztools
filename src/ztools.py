@@ -622,6 +622,20 @@ def rotate_extrude_withdelta(solid, angle):
     delta = multmatrix(to_matrix(move_vec), to_matrix(move_vec2))
     return TransformLineageMonad.ResultWithDelta(res, delta, [res])
 
+def wrap_withdelta(solid, r):
+    '''
+    Perform wrap. Solid should be already a projection "standing up" vertically, on positive xyz quandrant.
+    NOTE: wrap() is another native operation that 'resets' the origin despite no movement was done, which breaks lineage.
+    We will override it, based on distance from origin sans z_axis.
+    '''
+    replacement = solid.wrap(r=r)
+    
+    # Wrap() results is in the center. We will take the movement vector without z-component.
+    _, center_vec = center(solid, axis=[1, 1, 0])
+    delta_matrix = to_matrix(center_vec)
+    return TransformLineageMonad.ResultWithDelta(replacement, delta_matrix, [replacement])
+
+
 
 class LappedCuts:
     '''
