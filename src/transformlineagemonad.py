@@ -100,7 +100,7 @@ class TransformLineageMonad:
             replacement = post_transform[0]
 
         # compute the delta transformation matrix
-        delta = self.__component_matrix(self.solid, replacement) if not override_delta_transform_matrix else override_delta_transform_matrix
+        delta = self.__component_matrix(replacement) if not override_delta_transform_matrix else override_delta_transform_matrix
         
         self.transformation_stack.append(delta)
         self.combined_origin = multmatrix(self.combined_origin, delta)
