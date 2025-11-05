@@ -70,8 +70,7 @@ class TransformLineageMonad:
         Return monad if transform_func is native, otherwise a tuple of monad and list-of-values from transform_func.
         '''
         post_transform = transform_func(self.solid)
-        
-        is_native = False
+
         replacement = None
         override_delta_transform_matrix = None
         
@@ -95,7 +94,7 @@ class TransformLineageMonad:
         self.transformation_stack.append(delta)
         self.solid = replacement
 
-        return self if is_native else (self, post_transform)
+        return self, post_transform
         
     def __component_matrix(self, before, after) -> List[List[float]]:
         '''
