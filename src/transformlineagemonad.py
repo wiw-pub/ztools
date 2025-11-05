@@ -110,7 +110,7 @@ class TransformLineageMonad:
 
         return self, post_transform
     
-    def get_checkpoint(self):
+    def debug_see_checkpoint(self):
         return self.__checkpoint
         
     def __component_matrix(self, replacement):

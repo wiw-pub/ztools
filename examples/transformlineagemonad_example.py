@@ -95,7 +95,10 @@ def rotate_extrude_usecase():
             weird_pottery_looking_thing, _ = dum_ready_for_rotate_extrude.apply_mutably(lambda shape: shape.rotate_extrude(180))
             print(weird_pottery_looking_thing.combined_origin)
             print(weird_pottery_looking_thing.transformation_stack[-1])
-            print(len(weird_pottery_looking_thing.transformation_stack), weird_pottery_looking_thing.get_checkpoint())
+            print(len(weird_pottery_looking_thing.transformation_stack))
+            
+            print(dir(weird_pottery_looking_thing))
+#            print(weird_pottery_looking_thing.get_checkpoint())
             show(weird_pottery_looking_thing.solid.color('orange'))
             
         show(monad.solid.color('magenta'))
