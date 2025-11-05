@@ -564,8 +564,9 @@ def simple_chamfer(uni_mask, solid):
     
     return [post_op, solid_minus_mask]
 
-
+####################################################################
 # Experimental monad based operations.
+####################################################################
 def offset_3d_withdelta(solid, delta = [1, 1, 1], auto_center=True, mn = None, mx = None):
     '''
     EXPERIMENTAL FOR TESTING: ResultWithDelta variant of offset_3d in ztools.
@@ -579,6 +580,11 @@ def center_withdelta(solid, axis = [1, 1, 1], mn = None, mx = None):
     '''
     res, move_vec = center(solid, axis, mn, mx)
     return TransformLineageMonad.ResultWithDelta(res, to_matrix(move_vec), [res])
+
+
+def axis_aligned_withdelta(solid, axis = [0, 0, 1], mn = None, mx = None):
+    res_solid, move_vec = axis_aligned(solid, axis, mn, mx)
+    return TransformLineageMonad.ResultWithDelta(res_solid, to_matrix(move_vec), [res_solid, move_vec])
 
 
 class LappedCuts:
