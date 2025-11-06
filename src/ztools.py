@@ -228,7 +228,7 @@ def z_stack(*solids_with_z_deltas):
         
         res.append(solid)
         agg_height += (z_h + z_delta)
-    return union(res)
+    return res
 
 def z_bisect(solid, top_mask=None, epsilon=0.001):
     '''
