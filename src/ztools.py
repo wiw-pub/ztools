@@ -378,11 +378,17 @@ def line_magnitude(point_left, point_right):
     x2, y2 = point_right
     return ((y2 - y1) ** 2 + (x2 - x1) ** 2) ** 0.5
 
-def midpoint(point_left, point_right):
-    x1, y1 = point_left
-    x2, y2 = point_right
+# def midpoint(point_left, point_right):
+#     x1, y1 = point_left
+#     x2, y2 = point_right
 
-    return (x1 + x2) / 2, (y1 + y2) / 2
+#     return (x1 + x2) / 2, (y1 + y2) / 2
+
+def midpoint(coord_left, coord_right):
+    '''
+    Works for both 2d and 3d points.
+    '''
+    return [(left_dim + right_dim) / 2 for left_dim, right_dim in zip(coord_left, coord_right)]
 
 def arc(arc_point_left, arc_point_mid, arc_point_right):
     '''
