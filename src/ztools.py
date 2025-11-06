@@ -373,10 +373,13 @@ def to_matrix(vec):
 def to_translation_vector(matrix):
     return [matrix[0][-1], matrix[1][-1], matrix[2][-1]]
 
-def line_magnitude(point_left, point_right):
-    x1, y1 = point_left
-    x2, y2 = point_right
-    return ((y2 - y1) ** 2 + (x2 - x1) ** 2) ** 0.5
+def dist(coord_left, coord_right):
+    '''
+    distance between two coordinates. Works for 2d or 3d.
+    Used to be called line_magnitude().
+    '''
+    components = [(dim_right - dim_left) ** 2 for dim_left, dim_right in zip(coord_left, coord_right)]
+    return sum(components) ** 0.5
 
 # def midpoint(point_left, point_right):
 #     x1, y1 = point_left
@@ -402,9 +405,9 @@ def arc(arc_point_left, arc_point_mid, arc_point_right):
     '''
 
     mid = midpoint(arc_point_left, arc_point_right)
-    a_mid = line_magnitude(arc_point_left, mid)
-    b_mid = line_magnitude(mid, arc_point_right)
-    minor = line_magnitude(arc_point_mid, mid)
+    a_mid = dist(arc_point_left, mid)
+    b_mid = dist(mid, arc_point_right)
+    minor = dist(arc_point_mid, mid)
 
     # Apply intersecting chord theorem
     major = a_mid * b_mid / minor
@@ -469,11 +472,35 @@ def add_single_brim(convex_solid, scale_factor=1.2, height=0.2):
 
     return [convex_solid | brim, brim]
 
+def debug_find_face_by_minimum_dist(solid, coordinate, num_faces=1):
+    '''
+    Given a 3x1 3d coordinate, find the face(s) that are the closest dist to the point.
+    '''
+
+    def iterate_faces():
+        for idx, f in enumerate(solid.faces()):
+            # Since face is not actually a solid: hack it by "attaching" a dummy solid center to the face.
+            dummy = cube(1, center='000').multmatrix(f.matrix)
+            _, move_vec = center(dummy)
+            move_from_origin_to_face = [-dim for dim in move_vec]
+
+            # rank by dist from face (proxy by dummy cube(1)) and arg coordinate
+            yield (f, idx, dist(move_from_origin_to_face, coordinate))
+    
+    best_matched_faces = heapq.nsmallest(num_faces, iterate_faces(), key=lambda tup: tup[2])
+    
+    # Reformat the output to list of 3 lists: [faces], [index], [dist].
+    # It's a simple transpose. Need to deref the tuples to flatten before rewrap as lists. Both arg to zip, and zip's output (which default to tuple).
+    return [[*dim] for dim in zip(*best_matched_faces)]
+
+
 def debug_find_face_by_normal_vector(solid, estimated_norm_vec, num_faces=1):
     '''
     Expected usage: user uses the measure tool after render, to find the 3x1 normal vector (printed in stdout status bar) of the face they want.
     Pass that 3x1 vector, and programming this returns the face closest to the given normal vector.
     It is possible to have multiple faces with the same normal vector (or matched by magnitude delta). Arg num_faces allows returning top matches up to num_faces.
+
+    XXX: This is not really usable in practice. Easier to find a face based on dist to a point.
     '''
 
     def transformation_matrix_to_normal_vector(trans_matrix):
