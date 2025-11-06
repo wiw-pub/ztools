@@ -215,6 +215,21 @@ def z_height(solid, mn = None, mx = None):
     '''
     return magnitudes(solid, mn, mx)[-1]
 
+def z_stack(*solids_with_z_deltas):
+    '''
+    Utility: stack all the solids, first one at the bottom.
+    '''
+    agg_height = 0
+    res = []
+    for solid, z_delta in solids_with_z_deltas:
+        solid, _ = axis_aligned(solid, axis=[0, 0, 1])
+        _, _, z_h = magnitudes(solid)
+        solid = solid.translate([0, 0, agg_height + z_delta])
+        
+        res.append(solid)
+        agg_height += (z_h + z_delta)
+    return union(res)
+
 def z_bisect(solid, top_mask=None, epsilon=0.001):
     '''
     Horizontal chop, given (optional) top mask.
