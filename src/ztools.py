@@ -349,8 +349,8 @@ def masked_map(mask, solid, func=lambda shape: shape.scale([0.5, 0.5, 1]), auto_
         # Undo the movement
         undo_vec = [-d for d in move_vec]
 
-        if isinstance(post_op, Iterable):
-            # TODO: Only supports single level collections for now.
+        if isinstance(post_op, list):
+            # TODO: Only supports single level collections for now (specifically list, since PythonScad object would return true for isinstance(obj, Iterable) now...)
             # XXX: to keep type consistency, make sure return value is a single solid.
             # Sorry, no lazy union flexibility.
             post_op = union([item.translate(undo_vec) for item in post_op])
@@ -535,6 +535,8 @@ def debug_find_face_by_normal_vector(solid, estimated_norm_vec, num_faces=1):
 
 def debug_face_indicators(solid, indicator = sphere(0.5), indicator_color = 'yellow'):
     '''
+    XXX: this uses solid.mesh(), which the order of items return is NOT THE SAME as solid.faces().
+    
     A generator of solids transposed to vertices indicating a face.
     Relies on mesh() underneath.
 
