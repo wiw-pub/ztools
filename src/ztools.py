@@ -685,7 +685,17 @@ def wrap_withdelta(solid, r):
     delta_matrix = to_matrix(center_vec)
     return TransformLineageMonad.ResultWithDelta(replacement, delta_matrix, [replacement])
 
-
+def rotate_withdelta(solid, angles=[0, 0, 0]):
+    '''
+    Apply rotation left-to-right order
+    This is required because divmatrix(after_rotation.origin, before_rotation.origin) seemingly includes translation.
+    This may be a bug. Until fixed, we will override by deleting all translation components.
+    '''
+    res = solid.rotate(angles)
+    delta = divmatrix(res.origin, solid.origin)
+    r0, r1, r2, r3 = delta
+    r0[-1], r1[-1], r2[-1], r3[-1] = 0, 0, 0, 1
+    return TransformLineageMonad.ResultWithDelta(res, delta, [res])
 
 class LappedCuts:
     '''
