@@ -51,6 +51,14 @@ class TransformLineageMonad:
         delta_transform_matrix: List[List[float]]
         transform_func_results: List[Any]
 
+        @staticmethod
+        def override_delta_noop(func_takes_solid_as_arg):
+            '''
+            Convenient function to override delta_transform_matrix with identity matrix.
+            It's so common for vanilla pythonscad functions to return a solid with .origin as identity matrix, which causes divmatrix() to generate non-zero translate/rotate/scale when in reality, the solid has not moved! 
+            '''
+            return lambda solid: TransformLineageMonad.ResultWithDelta(func_takes_solid_as_arg(solid), cube(1).origin, [])
+
     def clone(self) -> TransformLineageMonad:
         '''
         Deep clone of this TransformLineageMonad instance.
@@ -115,7 +123,7 @@ class TransformLineageMonad:
         self.solid = replacement
 
         return self, post_transform
-    
+
     def debug_see_checkpoint(self):
         return self.__checkpoint
         
