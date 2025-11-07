@@ -25,16 +25,22 @@ class TransformLineageMonad:
     # This solely exists, because some solid's origin is not trustworthy due to diff/union resetting origin despite we logically "track" it thru transformation_stack.
     # Have this "cached" compute is an optimization over performing multmatrix() thru transformation_stack all the time.
     #combined_origin: list[list[float]] = field(default_factory = lambda : cube(1).origin)
-    combined_origin: list[list[float]] = field(default_factory = lambda : solid.origin)
+    combined_origin: list[list[float]] = field(default_factory = lambda : list)
     
     '''
     Stack of transformations to end in this solid.
     If not provided, init with identity matrix.
     '''
     #transformation_stack: list[list[list[float]]] = field(default_factory = lambda : [cube(1).origin])
-    transformation_stack: list[list[list[float]]] = field(default_factory = lambda : [solid.origin])
+    transformation_stack: list[list[list[float]]] = field(default_factory = lambda : list)
 
     __checkpoint: int = 1
+
+    def __post_init__(self):
+        if not self.combined_origin:
+            self.combined_origin = self.solid.origin
+        if not self.transformation_stack:
+            self.transformation_stack.append(self.solid.origin)
     
     @dataclass
     class ResultWithDelta:
