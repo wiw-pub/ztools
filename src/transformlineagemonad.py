@@ -41,6 +41,9 @@ class TransformLineageMonad:
             self.combined_origin = self.solid.origin
         if not self.transformation_stack:
             self.transformation_stack.append(self.solid.origin)
+
+        print(self.combined_origin)
+        print(self.transformation_stack)
     
     @dataclass
     class ResultWithDelta:
