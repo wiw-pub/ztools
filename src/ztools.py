@@ -373,6 +373,18 @@ def to_matrix(vec):
 def to_translation_vector(matrix):
     return [matrix[0][-1], matrix[1][-1], matrix[2][-1]]
 
+def to_rotation_matrix(mtx):
+    '''
+    "Zero out" translation component of the vector.
+    '''
+    a, b, c, d = mtx
+    
+    # Deep copy
+    a, b, c, d = [row[:] for row in [a, b, c, d]]
+
+    a[-1], b[-1], c[-1], d[-1] = 0, 0, 0, 1
+    return [a, b, c, d]
+
 def dist(coord_left, coord_right):
     '''
     distance between two coordinates. Works for 2d or 3d.
