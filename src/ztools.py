@@ -626,6 +626,54 @@ def simple_chamfer(uni_mask, solid):
     
     return [post_op, solid_minus_mask]
 
+def text_multiline(lst_lines, text_config_kwargs):
+    '''
+    text() doesn't support newlines.
+    
+    Simulate by using bounding boxes and return unioned text().
+    
+    Inspired by https://github.com/openscad/openscad/issues/5018#issuecomment-2615936158
+    
+    Example usage:
+        
+        def info_words():
+            # two columns of words dictating cable connect ordering.
+            # - first column = connect
+            # - second column = disconnect
+            
+            conn_txt = """
+            Connect order:
+            [+] Dead
+            [+] Donor
+            [-] Donor
+            [GRD] Dead
+            """
+            
+            disconn_txt = """
+            Disconnect order:
+            [GRD] Dead
+            [-] Donor
+            [+] Donor
+            [+] Dead
+            """
+
+            left = text_multiline([line.strip() for line in conn_txt.strip().split('\n')], {})
+            right = text_multiline([line.strip() for line in disconn_txt.strip().split('\n')], {})
+            
+            return [left, right]
+    '''
+    
+    ans = []
+    for i, line in enumerate(lst_lines):
+        text_config_kwargs['text'] = line
+        rendered_line = text(**text_config_kwargs)
+        
+        _, my, _ = magnitudes(rendered_line.linear_extrude(1))
+        rendered_line = rendered_line.translate([0, -i * my, 0])
+        ans.append(rendered_line)
+        
+    return union(ans)
+
 ####################################################################
 # Experimental monad based operations.
 ####################################################################
