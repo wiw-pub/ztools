@@ -643,54 +643,6 @@ def simple_chamfer(uni_mask, solid):
     
     return [post_op, solid_minus_mask]
 
-def text_multiline(lst_lines, text_config_kwargs):
-    '''
-    text() doesn't support newlines.
-    
-    Simulate by using bounding boxes and return unioned text().
-    
-    Inspired by https://github.com/openscad/openscad/issues/5018#issuecomment-2615936158
-    
-    Example usage:
-        
-        def info_words():
-            # two columns of words dictating cable connect ordering.
-            # - first column = connect
-            # - second column = disconnect
-            
-            conn_txt = """
-            Connect order:
-            [+] Dead
-            [+] Donor
-            [-] Donor
-            [GRD] Dead
-            """
-            
-            disconn_txt = """
-            Disconnect order:
-            [GRD] Dead
-            [-] Donor
-            [+] Donor
-            [+] Dead
-            """
-
-            left = text_multiline([line.strip() for line in conn_txt.strip().split('\n')], {})
-            right = text_multiline([line.strip() for line in disconn_txt.strip().split('\n')], {})
-            
-            return [left, right]
-    '''
-    
-    ans = []
-    for i, line in enumerate(lst_lines):
-        text_config_kwargs['text'] = line
-        rendered_line = text(**text_config_kwargs)
-        
-        _, my, _ = magnitudes(rendered_line.linear_extrude(1))
-        rendered_line = rendered_line.translate([0, -i * my, 0])
-        ans.append(rendered_line)
-        
-    return union(ans)
-
 ####################################################################
 # Experimental monad based operations.
 ####################################################################
@@ -713,66 +665,6 @@ def axis_aligned_withdelta(solid, axis = [0, 0, 1], mn = None, mx = None):
     res_solid, move_vec = axis_aligned(solid, axis, mn, mx)
     return TransformLineageMonad.ResultWithDelta(res_solid, to_matrix(move_vec), [res_solid, move_vec])
 
-def translate_withdelta(solid, move_vec):
-    '''
-    translate's divmatrix seems to be non-invertible (e.g., if you translate() forward, and do divmatrix() on its origin, you will NOT return to where you had started).
-    
-    We can explicitly override by specifying the actual component transformation matrix (which is just 4x4 version of move_vec arg to translate()).
-    '''
-    replacement = solid.translate(move_vec)
-    return TransformLineageMonad.ResultWithDelta(replacement, to_matrix(move_vec), [replacement])
-    
-def projection_withdelta(solid):
-    '''
-    projection seem to "reset" solid's origin.
-    
-    For proper lineage construction, it needs to preserve lineage.
-    
-    We can override the component transform matrix with identity matrix (noop movement).
-    '''
-    replacement = projection(solid)
-    return TransformLineageMonad.ResultWithDelta(replacement, cube(1).origin, [replacement])
-    
-def rotate_extrude_withdelta(solid, angle):
-    '''
-    rotate_extrude makes origin the "center" of the result solid, but origin is set to identity matrix.
-    
-    use center() move_vec as the delta translation matrix.
-    '''
-    res = solid.rotate_extrude(angle)
-    
-    # center and axis_aligned only works on 3d solids. Raise the height to make it 3d to generate the delta transform matrix.
-    tmp = solid.linear_extrude(1)
-    tmp, move_vec = center(tmp, axis=[1, 1, 0])
-    _, move_vec2 = axis_aligned(tmp, axis=[0, 0, 1])
-    
-    delta = multmatrix(to_matrix(move_vec), to_matrix(move_vec2))
-    return TransformLineageMonad.ResultWithDelta(res, delta, [res])
-
-def wrap_withdelta(solid, r):
-    '''
-    Perform wrap. Solid should be already a projection "standing up" vertically, on positive xyz quandrant.
-    NOTE: wrap() is another native operation that 'resets' the origin despite no movement was done, which breaks lineage.
-    We will override it, based on distance from origin sans z_axis.
-    '''
-    replacement = solid.wrap(r=r)
-    
-    # Wrap() results is in the center. We will take the movement vector without z-component.
-    _, center_vec = center(solid, axis=[1, 1, 0])
-    delta_matrix = to_matrix(center_vec)
-    return TransformLineageMonad.ResultWithDelta(replacement, delta_matrix, [replacement])
-
-def rotate_withdelta(solid, angles=[0, 0, 0]):
-    '''
-    Apply rotation left-to-right order
-    This is required because divmatrix(after_rotation.origin, before_rotation.origin) seemingly includes translation.
-    This may be a bug. Until fixed, we will override by deleting all translation components.
-    '''
-    res = solid.rotate(angles)
-    delta = divmatrix(res.origin, solid.origin)
-    r0, r1, r2, r3 = delta
-    r0[-1], r1[-1], r2[-1], r3[-1] = 0, 0, 0, 1
-    return TransformLineageMonad.ResultWithDelta(res, delta, [res])
 
 class LappedCuts:
     '''
