@@ -317,6 +317,23 @@ def rolling_hull(solid, path):
 
     return [union(whole_path)] + vertices
 
+def rolling_filled_hull(solid, path):
+    '''
+    Returned the object formed by the FILLED shadow left by rolling the solid along all the coordinates on the path.
+    
+    NOTE: This differ from rolling_hull by filling in the concaved cavity. This makes a HARD assumption path given forms a enclosed shape and points are given in linear-path order (think hexagon in clockwise or counterclockwise order).
+    '''
+    template = center(solid)[0]
+    whole_path = []
+    vertices = []
+    for coord in path:
+        vertices.append(template.translate(coord))
+        
+        if len(vertices) >= 3:
+            whole_path.append(hull(vertices[-1], vertices[-2], vertices[-3]))
+
+    return [union(whole_path)] + vertices
+
 def masked_map(mask, solid, func=lambda shape: shape.scale([0.5, 0.5, 1]), auto_center=True):
     '''
     Only apply a lambda over the masked volume.
