@@ -24,15 +24,23 @@ class TransformLineageMonad:
     # Logical result of multmatrix() on all the 4x4 matrix in transformation_stack
     # This solely exists, because some solid's origin is not trustworthy due to diff/union resetting origin despite we logically "track" it thru transformation_stack.
     # Have this "cached" compute is an optimization over performing multmatrix() thru transformation_stack all the time.
-    combined_origin: list[list[float]] = field(default_factory = lambda : cube(1).origin)
+    #combined_origin: list[list[float]] = field(default_factory = lambda : cube(1).origin)
+    combined_origin: list[list[float]] = field(default_factory = list)
     
     '''
     Stack of transformations to end in this solid.
     If not provided, init with identity matrix.
     '''
-    transformation_stack: list[list[list[float]]] = field(default_factory = lambda : [cube(1).origin])
+    #transformation_stack: list[list[list[float]]] = field(default_factory = lambda : [cube(1).origin])
+    transformation_stack: list[list[list[float]]] = field(default_factory = list)
 
     __checkpoint: int = 1
+
+    def __post_init__(self):
+        if not self.combined_origin:
+            self.combined_origin = self.solid.origin
+        if not self.transformation_stack:
+            self.transformation_stack.append(self.solid.origin)
     
     @dataclass
     class ResultWithDelta:
@@ -42,6 +50,14 @@ class TransformLineageMonad:
         result_solid: Openscad
         delta_transform_matrix: List[List[float]]
         transform_func_results: List[Any]
+
+        @staticmethod
+        def override_delta_noop(func_takes_solid_as_arg):
+            '''
+            Convenient function to override delta_transform_matrix with identity matrix.
+            It's so common for vanilla pythonscad functions to return a solid with .origin as identity matrix, which causes divmatrix() to generate non-zero translate/rotate/scale when in reality, the solid has not moved! 
+            '''
+            return lambda solid: TransformLineageMonad.ResultWithDelta(func_takes_solid_as_arg(solid), cube(1).origin, [])
 
     def clone(self) -> TransformLineageMonad:
         '''
@@ -107,7 +123,7 @@ class TransformLineageMonad:
         self.solid = replacement
 
         return self, post_transform
-    
+
     def debug_see_checkpoint(self):
         return self.__checkpoint
         
