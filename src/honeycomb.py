@@ -242,7 +242,3 @@ class Honeycomb:
             return union(column)
 
         return column_holes()
-        
-h = Honeycomb()
-
-show(h.fill_sheet(100, 100))
