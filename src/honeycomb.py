@@ -90,13 +90,12 @@ class Honeycomb:
         mask = square([x, y])
 
         # Upper bound generate combs.
-        # X bounds: ceil(x / self.outer_radius)
-        # Y bounds = ceil(y / (math.cos(math.radians(30))/outer_radius))
-
-        d = 2 * self.outer_radius
+        x_mag, y_mag, _ = zt.magnitudes(self.pair()[0].linear_extrude(1))
         sheet = []
-        x_bound = math.ceil(x / d)
-        y_bound = math.ceil(y / (self.perpendicular_angle() * d))
+        
+        # Lazy overage.
+        x_bound = math.ceil(x/x_mag) * 2
+        y_bound = math.ceil(y/y_mag) * 2
 
         shell, x_off, y_off = self.pair()
         for xx, yy in itertools.product(range(x_bound), range(y_bound)):
@@ -243,3 +242,7 @@ class Honeycomb:
             return union(column)
 
         return column_holes()
+        
+h = Honeycomb()
+
+show(h.fill_sheet(100, 100))
