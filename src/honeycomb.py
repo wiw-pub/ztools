@@ -90,13 +90,14 @@ class Honeycomb:
         mask = square([x, y])
 
         # Upper bound generate combs.
-        x_mag, y_mag, _ = zt.magnitudes(self.pair()[0].linear_extrude(1))
+        _, y_mag, _ = zt.magnitudes(self.pair()[0].linear_extrude(1))
+        x_mag, _, _ = zt.magnitudes(self.single().linear_extrude(1))
         sheet = []
         
         # Lazy overage.
-        x_bound = math.ceil(x/x_mag) * 2
-        y_bound = math.ceil(y/y_mag) * 2
-
+        x_bound = math.ceil(x/x_mag * 1.5)
+        y_bound = math.ceil(y/y_mag * 1.5)
+        
         shell, x_off, y_off = self.pair()
         for xx, yy in itertools.product(range(x_bound), range(y_bound)):
             sheet.append(shell.translate([x_off * xx, y_off * yy, 0]))
