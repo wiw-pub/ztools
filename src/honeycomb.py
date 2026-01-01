@@ -34,11 +34,30 @@ class Honeycomb:
         '''
         a = self.single(hole)
 
+
+        # Old implementation: hex side is aligned on x-axis
+        '''
         # x_offset shifts the honeycomb hexagon corner-to-corner, but need to reduce by the hexagon's wing obtuse triangle height.
         # wing obtuse triangle height = radius * cos(60)
         wing_obtuse_triangle_height = (self.outer_radius) * math.cos(math.radians(60))
         x_offset, y_offset = (self.outer_radius * 2 - self.thickness - wing_obtuse_triangle_height), self.perpendicular_angle() * (self.outer_radius - self.thickness/2)
         b = a.translate([x_offset, y_offset, 0])
+        res = a | b
+        '''
+        
+        # center to corner
+        inner_corner_radius = -self.thickness + self.outer_radius
+        
+        # center to side
+        inner_side_radius = inner_corner_radius * math.cos(math.radians(180/6))
+        
+        outer_side_radius = self.outer_radius * math.cos(math.radians(180/6))
+        
+        # Double the center-to-side radius will get you edge-to-edge stack.
+        # Subtract the thickness for overlap. But wait: thickness is based on corner radius. Take a sin.
+        dist_r = (outer_side_radius * 2) - (2 * self.thickness * math.sin(math.radians(180/6)))
+        x_offset, y_offset = dist_r * math.cos(math.radians(2 * 180/6)), dist_r * math.sin(math.radians(2 * 180/6))
+        b = a.translate([x_offset, y_offset, 0]).color('red')
         res = a | b
 
         # Also return offset distances.
@@ -52,8 +71,13 @@ class Honeycomb:
         inner = c.offset(r=-self.thickness, fn=6)
         shell = c - inner if not hole else inner
 
+        # New implementation: hex is "standing" on a corner on x-axis.
+        shell = shell.rotz(360/6/2)
+        shell = projection(zt.axis_aligned(shell.linear_extrude(1), [1, 1, 0])[0])
+
+        # Old implementation: hex side is aligned on x-axis.
         # reposition to quadrant 1.
-        shell = shell.translate([self.outer_radius, self.outer_radius * self.perpendicular_angle(), 0])
+        #shell = shell.translate([self.outer_radius, self.outer_radius * self.perpendicular_angle(), 0])
         return shell
 
     def fill_sheet(self, x, y, only_raw=False):
@@ -219,3 +243,7 @@ class Honeycomb:
             return union(column)
 
         return column_holes()
+
+#h = Honeycomb(outer_radius=6, thickness=2)
+#show(h.single())
+#show(h.pair()[0])
