@@ -243,7 +243,3 @@ class Honeycomb:
             return union(column)
 
         return column_holes()
-
-#h = Honeycomb(outer_radius=6, thickness=2)
-#show(h.single())
-#show(h.pair()[0])
